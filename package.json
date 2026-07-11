@@ -1,0 +1,17 @@
+{
+  "name": "personal-website",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "frontend-public",
+    "frontend-admin"
+  ],
+  "scripts": {
+    "dev:public": "npm run dev --workspace @personal-website/frontend-public",
+    "dev:admin": "npm run dev --workspace @personal-website/frontend-admin",
+    "build": "npm run build --workspaces",
+    "preview:public": "npm run preview --workspace @personal-website/frontend-public",
+    "preview:admin": "npm run preview --workspace @personal-website/frontend-admin"
+  }
+}
