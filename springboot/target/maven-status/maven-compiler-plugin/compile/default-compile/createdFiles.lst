@@ -4,6 +4,7 @@ com/malik/personal_website/entities/UserEntity.class
 com/malik/personal_website/controllers/AdminSkillController.class
 com/malik/personal_website/controllers/PublicContactMessageController.class
 com/malik/personal_website/dto/DashboardSummaryResponse.class
+com/malik/personal_website/repositories/SkillCategoryRepository.class
 com/malik/personal_website/controllers/AdminProfileController.class
 com/malik/personal_website/entities/ContactMessageEntity.class
 com/malik/personal_website/exceptions/ResourceNotFoundException.class
@@ -25,7 +26,6 @@ com/malik/personal_website/PersonalWebsiteApplication.class
 com/malik/personal_website/enums/UserRole.class
 com/malik/personal_website/dto/SkillRequest.class
 com/malik/personal_website/dto/EnumValuesResponse.class
-com/malik/personal_website/enums/SkillCategory.class
 com/malik/personal_website/dto/CurrentUserResponse.class
 com/malik/personal_website/controllers/HealthController.class
 com/malik/personal_website/entities/SkillEntity.class
@@ -51,6 +51,8 @@ com/malik/personal_website/dto/HealthResponse.class
 com/malik/personal_website/controllers/AdminProjectController.class
 com/malik/personal_website/services/AdminDashboardService.class
 com/malik/personal_website/services/HomeService.class
+com/malik/personal_website/entities/SkillCategoryEntity.class
+com/malik/personal_website/dto/SkillCategoryResponse.class
 com/malik/personal_website/controllers/PublicProjectController.class
 com/malik/personal_website/repositories/ProfileRepository.class
 com/malik/personal_website/controllers/PublicHomeController.class

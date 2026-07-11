@@ -29,6 +29,7 @@
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/ProjectResponse.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/ProjectStatusUpdateRequest.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/ProjectSummaryResponse.java
+/Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/SkillCategoryResponse.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/SkillRequest.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/SkillResponse.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/dto/SkillVisibilityUpdateRequest.java
@@ -36,11 +37,11 @@
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/entities/ContactMessageEntity.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/entities/ProfileEntity.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/entities/ProjectEntity.java
+/Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/entities/SkillCategoryEntity.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/entities/SkillEntity.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/entities/UserEntity.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/enums/ContactMessageStatus.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/enums/PublicationStatus.java
-/Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/enums/SkillCategory.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/enums/SkillLevel.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/enums/UserRole.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/exceptions/ApiExceptionHandler.java
@@ -48,6 +49,7 @@
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/repositories/ContactMessageRepository.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/repositories/ProfileRepository.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/repositories/ProjectRepository.java
+/Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/repositories/SkillCategoryRepository.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/repositories/SkillRepository.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/repositories/UserRepository.java
 /Users/malik/PetProjects/personal-website/springboot/src/main/java/com/malik/personal_website/services/AdminDashboardService.java

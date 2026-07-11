@@ -5,7 +5,7 @@ import { SkillGroups } from '../features/skills/SkillGroups';
 import { fetchHome } from '../shared/api/home';
 import { LoadingState, PageState } from '../shared/components/PageState';
 import { SocialLinks } from '../shared/components/SocialLinks';
-import { getInitials, getProfileName, skillCategoryOrder } from '../shared/utils/formatters';
+import { getInitials, getProfileName, normalizeSkillCategories } from '../shared/utils/formatters';
 
 export function HomePage() {
   const homeQuery = useQuery({
@@ -31,6 +31,7 @@ export function HomePage() {
   const projects = homeQuery.data?.projects ?? [];
   const featuredProjects = projects.slice(0, 3);
   const visibleSkills = homeQuery.data?.skills.filter((skill) => skill.visible !== false) ?? [];
+  const skillCategories = normalizeSkillCategories(undefined, visibleSkills);
 
   return (
     <>
@@ -100,7 +101,7 @@ export function HomePage() {
         </div>
 
         {visibleSkills.length > 0 ? (
-          <SkillGroups skills={visibleSkills} categories={skillCategoryOrder} />
+          <SkillGroups skills={visibleSkills} categories={skillCategories} />
         ) : (
           <PageState compact title="Skills are being updated" message="The public skill list is not available yet." />
         )}

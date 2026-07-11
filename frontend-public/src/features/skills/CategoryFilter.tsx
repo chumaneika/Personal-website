@@ -1,32 +1,31 @@
-import type { SkillCategory } from '../../shared/types/api';
-import { skillCategoryLabels } from '../../shared/utils/formatters';
+import type { SkillCategoryResponse } from '../../shared/types/api';
 
 type CategoryFilterProps = {
-  categories: SkillCategory[];
-  selectedCategory: SkillCategory | null;
-  onChange: (category: SkillCategory | null) => void;
+  categories: SkillCategoryResponse[];
+  selectedCategoryId: number | null;
+  onChange: (category: SkillCategoryResponse | null) => void;
 };
 
-export function CategoryFilter({ categories, selectedCategory, onChange }: CategoryFilterProps) {
+export function CategoryFilter({ categories, selectedCategoryId, onChange }: CategoryFilterProps) {
   return (
     <div className="category-filter" aria-label="Skill category filter">
       <button
         type="button"
-        aria-pressed={!selectedCategory}
-        className={!selectedCategory ? 'is-selected' : undefined}
+        aria-pressed={!selectedCategoryId}
+        className={!selectedCategoryId ? 'is-selected' : undefined}
         onClick={() => onChange(null)}
       >
         All
       </button>
       {categories.map((category) => (
         <button
-          key={category}
+          key={category.id}
           type="button"
-          aria-pressed={selectedCategory === category}
-          className={selectedCategory === category ? 'is-selected' : undefined}
+          aria-pressed={selectedCategoryId === category.id}
+          className={selectedCategoryId === category.id ? 'is-selected' : undefined}
           onClick={() => onChange(category)}
         >
-          {skillCategoryLabels[category]}
+          {category.name}
         </button>
       ))}
     </div>

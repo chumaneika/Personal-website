@@ -5,21 +5,19 @@ import { SkillGroups } from '../features/skills/SkillGroups';
 import { fetchMetaEnums } from '../shared/api/meta';
 import { fetchSkills } from '../shared/api/skills';
 import { LoadingState, PageState } from '../shared/components/PageState';
-import type { SkillCategory } from '../shared/types/api';
+import type { SkillCategoryResponse } from '../shared/types/api';
 import { normalizeSkillCategories } from '../shared/utils/formatters';
 
 export function SkillsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<SkillCategory | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SkillCategoryResponse | null>(null);
   const metaQuery = useQuery({
     queryKey: ['meta', 'enums'],
     queryFn: fetchMetaEnums,
   });
   const skillsQuery = useQuery({
-    queryKey: ['skills', selectedCategory ?? 'all'],
-    queryFn: () => fetchSkills(selectedCategory ?? undefined),
+    queryKey: ['skills', selectedCategory?.id ?? 'all'],
+    queryFn: () => fetchSkills(selectedCategory?.id),
   });
-
-  const categories = normalizeSkillCategories(metaQuery.data?.skillCategories);
 
   if (skillsQuery.isLoading) {
     return <LoadingState label="Loading skills..." />;
@@ -36,6 +34,7 @@ export function SkillsPage() {
   }
 
   const visibleSkills = skillsQuery.data?.filter((skill) => skill.visible !== false) ?? [];
+  const categories = normalizeSkillCategories(metaQuery.data?.skillCategories, visibleSkills);
 
   return (
     <section className="stack-page">
@@ -45,7 +44,11 @@ export function SkillsPage() {
         <p>Core backend, frontend, database, DevOps, tooling, and language skills.</p>
       </header>
 
-      <CategoryFilter categories={categories} selectedCategory={selectedCategory} onChange={setSelectedCategory} />
+      <CategoryFilter
+        categories={categories}
+        selectedCategoryId={selectedCategory?.id ?? null}
+        onChange={setSelectedCategory}
+      />
       {metaQuery.isLoading && <p className="inline-status">Loading skill categories...</p>}
       {metaQuery.isError && <p className="inline-status inline-status--error">Skill categories are temporarily unavailable.</p>}
 

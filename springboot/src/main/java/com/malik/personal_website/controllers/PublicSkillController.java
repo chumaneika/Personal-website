@@ -1,7 +1,6 @@
 package com.malik.personal_website.controllers;
 
 import com.malik.personal_website.dto.SkillResponse;
-import com.malik.personal_website.enums.SkillCategory;
 import com.malik.personal_website.services.SkillService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +17,8 @@ public class PublicSkillController {
     private final SkillService skillService;
 
     @GetMapping
-    public List<SkillResponse> getSkills(@RequestParam(required = false) SkillCategory category) {
-        return skillService.getVisibleSkills(category)
+    public List<SkillResponse> getSkills(@RequestParam(required = false) Long categoryId) {
+        return skillService.getVisibleSkills(categoryId)
                 .stream()
                 .map(SkillResponse::from)
                 .toList();

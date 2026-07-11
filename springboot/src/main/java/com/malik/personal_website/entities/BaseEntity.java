@@ -1,12 +1,7 @@
 package com.malik.personal_website.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
+import jakarta.persistence.*;
+
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Objects;
@@ -17,8 +12,12 @@ import lombok.Getter;
 public abstract class BaseEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id", nullable = false, updatable = false)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "base_seq")
+    @SequenceGenerator(
+            name = "base_seq",
+            sequenceName = "base_seq",
+            allocationSize = 10
+    )
     private Long id;
 
     @Column(name = "created_at", nullable = false, updatable = false)

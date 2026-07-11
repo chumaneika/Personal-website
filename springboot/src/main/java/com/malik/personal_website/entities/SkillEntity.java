@@ -1,11 +1,12 @@
 package com.malik.personal_website.entities;
 
-import com.malik.personal_website.enums.SkillCategory;
 import com.malik.personal_website.enums.SkillLevel;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,9 +20,9 @@ public class SkillEntity extends BaseEntity {
     @Column(name = "name", nullable = false, length = 120)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "category", nullable = false, length = 32)
-    private SkillCategory category;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "category_id", nullable = false)
+    private SkillCategoryEntity category;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "level", nullable = false, length = 32)
@@ -37,7 +38,7 @@ public class SkillEntity extends BaseEntity {
         this.name = requireText(name, "name", 120);
     }
 
-    public void setCategory(SkillCategory category) {
+    public void setCategory(SkillCategoryEntity category) {
         this.category = requireValue(category, "category");
     }
 

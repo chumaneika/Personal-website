@@ -1,14 +1,13 @@
 package com.malik.personal_website.dto;
 
 import com.malik.personal_website.entities.SkillEntity;
-import com.malik.personal_website.enums.SkillCategory;
 import com.malik.personal_website.enums.SkillLevel;
 import java.time.Instant;
 
 public record SkillResponse(
         Long id,
         String name,
-        SkillCategory category,
+        SkillCategoryResponse category,
         SkillLevel level,
         int sortOrder,
         boolean visible,
@@ -20,7 +19,7 @@ public record SkillResponse(
         return new SkillResponse(
                 skill.getId(),
                 skill.getName(),
-                skill.getCategory(),
+                SkillCategoryResponse.from(skill.getCategory()),
                 skill.getLevel(),
                 skill.getSortOrder(),
                 skill.isVisible(),

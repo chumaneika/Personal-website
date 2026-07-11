@@ -1,22 +1,4 @@
-import type { ProfileResponse, SkillCategory, SkillResponse } from '../types/api';
-
-export const skillCategoryOrder: SkillCategory[] = [
-  'BACKEND',
-  'FRONTEND',
-  'DATABASE',
-  'DEVOPS',
-  'TOOLS',
-  'LANGUAGE',
-];
-
-export const skillCategoryLabels: Record<SkillCategory, string> = {
-  BACKEND: 'Backend',
-  FRONTEND: 'Frontend',
-  DATABASE: 'Database',
-  DEVOPS: 'DevOps',
-  TOOLS: 'Tools',
-  LANGUAGE: 'Languages',
-};
+import type { ProfileResponse, SkillCategoryResponse, SkillResponse } from '../types/api';
 
 export const skillLevelLabels = {
   BASIC: 'Basic',
@@ -76,19 +58,35 @@ export function formatMonthYear(value: string | null | undefined) {
 }
 
 export function groupSkillsByCategory(skills: SkillResponse[]) {
-  return skillCategoryOrder.reduce<Record<SkillCategory, SkillResponse[]>>((groups, category) => {
-    groups[category] = skills
-      .filter((skill) => skill.visible !== false && skill.category === category)
-      .sort((first, second) => first.sortOrder - second.sortOrder || first.name.localeCompare(second.name));
+  return skills.reduce<Record<number, SkillResponse[]>>((groups, skill) => {
+    if (skill.visible === false) {
+      return groups;
+    }
+
+    const categoryId = skill.category.id;
+    groups[categoryId] = [
+      ...(groups[categoryId] ?? []),
+      skill,
+    ].sort((first, second) => first.sortOrder - second.sortOrder || first.name.localeCompare(second.name));
 
     return groups;
-  }, {} as Record<SkillCategory, SkillResponse[]>);
+  }, {});
 }
 
-export function normalizeSkillCategories(categories: SkillCategory[] | undefined) {
-  if (!categories?.length) {
-    return skillCategoryOrder;
+export function normalizeSkillCategories(
+  categories: SkillCategoryResponse[] | undefined,
+  skills: SkillResponse[] = [],
+) {
+  if (categories?.length) {
+    return categories;
   }
 
-  return skillCategoryOrder.filter((category) => categories.includes(category));
+  const uniqueCategories = Array.from(
+    skills.reduce<Map<number, SkillCategoryResponse>>((uniqueCategories, skill) => {
+      uniqueCategories.set(skill.category.id, skill.category);
+      return uniqueCategories;
+    }, new Map()).values(),
+  );
+
+  return uniqueCategories.sort((first, second) => first.name.localeCompare(second.name));
 }

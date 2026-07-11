@@ -1,13 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { fetchMetaEnums } from '../shared/api/meta';
 import { deleteSkill, fetchSkills, updateSkillVisibility } from '../shared/api/skills';
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
-import { SkillCategory, SKILL_CATEGORIES } from '../shared/types/api';
 
-type CategoryFilter = SkillCategory | 'ALL';
+type CategoryFilter = number | 'ALL';
 type VisibilityFilter = 'ALL' | 'VISIBLE' | 'HIDDEN';
 
 export function SkillsPage() {
@@ -16,6 +16,11 @@ export function SkillsPage() {
   const skillsQuery = useQuery({
     queryKey: ['skills'],
     queryFn: fetchSkills,
+  });
+  const metaQuery = useQuery({
+    queryKey: ['meta-enums'],
+    queryFn: fetchMetaEnums,
+    staleTime: Infinity,
   });
 
   const visibilityMutation = useMutation({
@@ -36,7 +41,7 @@ export function SkillsPage() {
 
   const filteredSkills = useMemo(() => {
     return (skillsQuery.data ?? []).filter((skill) => {
-      const matchesCategory = categoryFilter === 'ALL' || skill.category === categoryFilter;
+      const matchesCategory = categoryFilter === 'ALL' || skill.category.id === categoryFilter;
       const matchesVisibility =
         visibilityFilter === 'ALL' ||
         (visibilityFilter === 'VISIBLE' && skill.visible) ||
@@ -45,6 +50,14 @@ export function SkillsPage() {
       return matchesCategory && matchesVisibility;
     });
   }, [categoryFilter, skillsQuery.data, visibilityFilter]);
+
+  const categoryOptions =
+    metaQuery.data?.skillCategories ??
+    Array.from(
+      (skillsQuery.data ?? [])
+        .reduce((categories, skill) => categories.set(skill.category.id, skill.category), new Map())
+        .values(),
+    ).sort((first, second) => first.name.localeCompare(second.name));
 
   function handleDelete(id: number, name: string) {
     if (window.confirm(`Delete "${name}" permanently?`)) {
@@ -67,11 +80,17 @@ export function SkillsPage() {
       <div className="toolbar">
         <label>
           Category
-          <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value as CategoryFilter)}>
+          <select
+            value={categoryFilter}
+            onChange={(event) => {
+              const value = event.target.value;
+              setCategoryFilter(value === 'ALL' ? 'ALL' : Number(value));
+            }}
+          >
             <option value="ALL">All categories</option>
-            {SKILL_CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {formatStatus(category)}
+            {categoryOptions.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
               </option>
             ))}
           </select>
@@ -127,7 +146,7 @@ export function SkillsPage() {
                   <td>
                     <strong>{skill.name}</strong>
                   </td>
-                  <td>{formatStatus(skill.category)}</td>
+                  <td>{skill.category.name}</td>
                   <td>{formatStatus(skill.level)}</td>
                   <td>{skill.sortOrder}</td>
                   <td>

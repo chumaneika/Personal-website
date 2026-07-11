@@ -1,7 +1,5 @@
 export type PublicationStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
 
-export type SkillCategory = 'BACKEND' | 'FRONTEND' | 'DATABASE' | 'DEVOPS' | 'TOOLS' | 'LANGUAGE';
-
 export type SkillLevel = 'BASIC' | 'INTERMEDIATE' | 'ADVANCED';
 
 export type ContactMessageStatus = 'NEW' | 'READ' | 'ARCHIVED';
@@ -52,10 +50,15 @@ export type ProjectResponse = ProjectSummaryResponse & {
   updatedAt: string;
 };
 
+export type SkillCategoryResponse = {
+  id: number;
+  name: string;
+};
+
 export type SkillResponse = {
   id: number;
   name: string;
-  category: SkillCategory;
+  category: SkillCategoryResponse;
   level: SkillLevel;
   sortOrder: number;
   visible: boolean;
@@ -65,7 +68,7 @@ export type SkillResponse = {
 
 export type EnumValuesResponse = {
   publicationStatuses: PublicationStatus[];
-  skillCategories: SkillCategory[];
+  skillCategories: SkillCategoryResponse[];
   skillLevels: SkillLevel[];
   contactMessageStatuses: ContactMessageStatus[];
 };

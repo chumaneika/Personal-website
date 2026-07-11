@@ -1,10 +1,8 @@
 export const PUBLICATION_STATUSES = ['DRAFT', 'PUBLISHED', 'ARCHIVED'] as const;
-export const SKILL_CATEGORIES = ['BACKEND', 'FRONTEND', 'DATABASE', 'DEVOPS', 'TOOLS', 'LANGUAGE'] as const;
 export const SKILL_LEVELS = ['BASIC', 'INTERMEDIATE', 'ADVANCED'] as const;
 export const CONTACT_MESSAGE_STATUSES = ['NEW', 'READ', 'ARCHIVED'] as const;
 
 export type PublicationStatus = (typeof PUBLICATION_STATUSES)[number];
-export type SkillCategory = (typeof SKILL_CATEGORIES)[number];
 export type SkillLevel = (typeof SKILL_LEVELS)[number];
 export type ContactMessageStatus = (typeof CONTACT_MESSAGE_STATUSES)[number];
 
@@ -95,10 +93,15 @@ export type ProjectRequest = {
   completedAt?: string | null;
 };
 
+export type SkillCategoryResponse = {
+  id: number;
+  name: string;
+};
+
 export type SkillResponse = {
   id: number;
   name: string;
-  category: SkillCategory;
+  category: SkillCategoryResponse;
   level: SkillLevel;
   sortOrder: number;
   visible: boolean;
@@ -108,7 +111,7 @@ export type SkillResponse = {
 
 export type SkillRequest = {
   name: string;
-  category: SkillCategory;
+  categoryId: number;
   level: SkillLevel;
   sortOrder?: number;
   visible?: boolean;
@@ -126,7 +129,7 @@ export type ContactMessageResponse = {
 
 export type MetaEnumsResponse = {
   publicationStatuses: string[];
-  skillCategories: string[];
+  skillCategories: SkillCategoryResponse[];
   skillLevels: string[];
   contactMessageStatuses: string[];
 };

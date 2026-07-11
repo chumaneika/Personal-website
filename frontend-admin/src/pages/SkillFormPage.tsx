@@ -11,17 +11,15 @@ import { getApiErrorMessage } from '../shared/lib/errors';
 import { optionalNumber } from '../shared/lib/form';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
 import {
-  SkillCategory,
   SkillLevel,
   SkillRequest,
   SkillResponse,
-  SKILL_CATEGORIES,
   SKILL_LEVELS,
 } from '../shared/types/api';
 
 const skillSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(120, 'Use 120 characters or fewer.'),
-  category: z.enum(['BACKEND', 'FRONTEND', 'DATABASE', 'DEVOPS', 'TOOLS', 'LANGUAGE']),
+  categoryId: z.coerce.number().int('Select a category.').positive('Select a category.'),
   level: z.enum(['BASIC', 'INTERMEDIATE', 'ADVANCED']),
   sortOrder: z.coerce.number().int('Use a whole number.').min(0, 'Sort order must be 0 or greater.'),
   visible: z.boolean(),
@@ -31,7 +29,7 @@ type SkillFormValues = z.infer<typeof skillSchema>;
 
 const emptySkillValues: SkillFormValues = {
   name: '',
-  category: 'FRONTEND',
+  categoryId: 0,
   level: 'INTERMEDIATE',
   sortOrder: 0,
   visible: true,
@@ -47,7 +45,7 @@ function knownOptions<T extends string>(values: string[] | undefined, fallback: 
 function getSkillValues(skill: SkillResponse): SkillFormValues {
   return {
     name: skill.name,
-    category: skill.category,
+    categoryId: skill.category.id,
     level: skill.level,
     sortOrder: skill.sortOrder,
     visible: skill.visible,
@@ -57,7 +55,7 @@ function getSkillValues(skill: SkillResponse): SkillFormValues {
 function toSkillRequest(values: SkillFormValues): SkillRequest {
   return {
     name: values.name.trim(),
-    category: values.category,
+    categoryId: values.categoryId,
     level: values.level,
     sortOrder: optionalNumber(values.sortOrder),
     visible: values.visible,
@@ -111,7 +109,7 @@ export function SkillFormPage() {
     },
   });
 
-  const categoryOptions = knownOptions<SkillCategory>(metaQuery.data?.skillCategories, SKILL_CATEGORIES);
+  const categoryOptions = metaQuery.data?.skillCategories ?? [];
   const levelOptions = knownOptions<SkillLevel>(metaQuery.data?.skillLevels, SKILL_LEVELS);
 
   if (hasInvalidId) {
@@ -167,14 +165,15 @@ export function SkillFormPage() {
             </label>
             <label>
               Category
-              <select {...form.register('category')}>
+              <select {...form.register('categoryId', { valueAsNumber: true })}>
+                <option value={0}>Select category</option>
                 {categoryOptions.map((category) => (
-                  <option key={category} value={category}>
-                    {formatStatus(category)}
+                  <option key={category.id} value={category.id}>
+                    {category.name}
                   </option>
                 ))}
               </select>
-              {form.formState.errors.category && <span>{form.formState.errors.category.message}</span>}
+              {form.formState.errors.categoryId && <span>{form.formState.errors.categoryId.message}</span>}
             </label>
             <label>
               Level
@@ -200,7 +199,7 @@ export function SkillFormPage() {
           </label>
 
           {metaQuery.isError && (
-            <p className="muted-text">Metadata options are using frontend defaults because /meta/enums failed.</p>
+            <p className="muted-text">Skill categories could not be loaded from /meta/enums.</p>
           )}
 
           <div className="form-actions">
