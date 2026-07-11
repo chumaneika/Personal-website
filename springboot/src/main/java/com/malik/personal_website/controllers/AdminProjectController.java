@@ -1,8 +1,9 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.ProjectRequest;
-import com.malik.personal_website.dto.ProjectResponse;
-import com.malik.personal_website.dto.ProjectStatusUpdateRequest;
+import com.malik.personal_website.dto.request.ProjectRequest;
+import com.malik.personal_website.dto.response.ProjectResponse;
+import com.malik.personal_website.dto.request.ProjectStatusUpdateRequest;
+import com.malik.personal_website.dto.mapper.ProjectMapper;
 import com.malik.personal_website.enums.PublicationStatus;
 import com.malik.personal_website.services.ProjectService;
 import jakarta.validation.Valid;
@@ -27,29 +28,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminProjectController {
 
     private final ProjectService projectService;
+    private final ProjectMapper projectMapper;
 
     @GetMapping
     public List<ProjectResponse> getProjects(@RequestParam(required = false) PublicationStatus status) {
-        return projectService.getAdminProjects(status)
-                .stream()
-                .map(ProjectResponse::from)
-                .toList();
+        return projectMapper.toResponses(projectService.getAdminProjects(status));
     }
 
     @GetMapping("/{id}")
     public ProjectResponse getProject(@PathVariable Long id) {
-        return ProjectResponse.from(projectService.getAdminProject(id));
+        return projectMapper.toResponse(projectService.getAdminProject(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectResponse createProject(@Valid @RequestBody ProjectRequest request) {
-        return ProjectResponse.from(projectService.createProject(request));
+        return projectMapper.toResponse(projectService.createProject(request));
     }
 
     @PutMapping("/{id}")
     public ProjectResponse updateProject(@PathVariable Long id, @Valid @RequestBody ProjectRequest request) {
-        return ProjectResponse.from(projectService.updateProject(id, request));
+        return projectMapper.toResponse(projectService.updateProject(id, request));
     }
 
     @PatchMapping("/{id}/status")
@@ -57,7 +56,7 @@ public class AdminProjectController {
             @PathVariable Long id,
             @Valid @RequestBody ProjectStatusUpdateRequest request
     ) {
-        return ProjectResponse.from(projectService.updateStatus(id, request.status()));
+        return projectMapper.toResponse(projectService.updateStatus(id, request.status()));
     }
 
     @DeleteMapping("/{id}")

@@ -1,6 +1,6 @@
 package com.malik.personal_website.exceptions;
 
-import com.malik.personal_website.dto.ErrorResponse;
+import com.malik.personal_website.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;

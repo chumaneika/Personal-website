@@ -1,6 +1,7 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.SkillResponse;
+import com.malik.personal_website.dto.response.SkillResponse;
+import com.malik.personal_website.dto.mapper.SkillMapper;
 import com.malik.personal_website.services.SkillService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicSkillController {
 
     private final SkillService skillService;
+    private final SkillMapper skillMapper;
 
     @GetMapping
     public List<SkillResponse> getSkills(@RequestParam(required = false) Long categoryId) {
-        return skillService.getVisibleSkills(categoryId)
-                .stream()
-                .map(SkillResponse::from)
-                .toList();
+        return skillMapper.toResponses(skillService.getVisibleSkills(categoryId));
     }
 }

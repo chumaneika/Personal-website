@@ -1,7 +1,8 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.ContactMessageRequest;
-import com.malik.personal_website.dto.ContactMessageResponse;
+import com.malik.personal_website.dto.request.ContactMessageRequest;
+import com.malik.personal_website.dto.response.ContactMessageResponse;
+import com.malik.personal_website.dto.mapper.ContactMessageMapper;
 import com.malik.personal_website.services.ContactMessageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicContactMessageController {
 
     private final ContactMessageService contactMessageService;
+    private final ContactMessageMapper contactMessageMapper;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ContactMessageResponse createMessage(@Valid @RequestBody ContactMessageRequest request) {
-        return ContactMessageResponse.from(contactMessageService.createMessage(request));
+        return contactMessageMapper.toResponse(contactMessageService.createMessage(request));
     }
 }

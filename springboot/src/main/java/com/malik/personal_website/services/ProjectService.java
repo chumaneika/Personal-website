@@ -1,6 +1,6 @@
 package com.malik.personal_website.services;
 
-import com.malik.personal_website.dto.ProjectRequest;
+import com.malik.personal_website.dto.request.ProjectRequest;
 import com.malik.personal_website.entities.ProjectEntity;
 import com.malik.personal_website.enums.PublicationStatus;
 import com.malik.personal_website.exceptions.ResourceNotFoundException;

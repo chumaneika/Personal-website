@@ -1,7 +1,7 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.EnumValuesResponse;
-import com.malik.personal_website.dto.SkillCategoryResponse;
+import com.malik.personal_website.dto.response.EnumValuesResponse;
+import com.malik.personal_website.dto.mapper.SkillCategoryMapper;
 import com.malik.personal_website.enums.ContactMessageStatus;
 import com.malik.personal_website.enums.PublicationStatus;
 import com.malik.personal_website.enums.SkillLevel;
@@ -19,15 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicMetadataController {
 
     private final SkillService skillService;
+    private final SkillCategoryMapper skillCategoryMapper;
 
     @GetMapping("/enums")
     public EnumValuesResponse getEnums() {
         return new EnumValuesResponse(
                 enumNames(PublicationStatus.values()),
-                skillService.getCategories()
-                        .stream()
-                        .map(SkillCategoryResponse::from)
-                        .toList(),
+                skillCategoryMapper.toResponses(skillService.getCategories()),
                 enumNames(SkillLevel.values()),
                 enumNames(ContactMessageStatus.values())
         );

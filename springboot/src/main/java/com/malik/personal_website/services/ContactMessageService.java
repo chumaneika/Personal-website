@@ -1,6 +1,6 @@
 package com.malik.personal_website.services;
 
-import com.malik.personal_website.dto.ContactMessageRequest;
+import com.malik.personal_website.dto.request.ContactMessageRequest;
 import com.malik.personal_website.entities.ContactMessageEntity;
 import com.malik.personal_website.enums.ContactMessageStatus;
 import com.malik.personal_website.exceptions.ResourceNotFoundException;

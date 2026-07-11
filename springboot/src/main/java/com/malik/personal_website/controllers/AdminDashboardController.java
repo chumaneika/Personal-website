@@ -1,6 +1,6 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.DashboardSummaryResponse;
+import com.malik.personal_website.dto.response.DashboardSummaryResponse;
 import com.malik.personal_website.services.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

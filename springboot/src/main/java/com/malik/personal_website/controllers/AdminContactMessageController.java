@@ -1,7 +1,8 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.ContactMessageResponse;
-import com.malik.personal_website.dto.ContactMessageStatusUpdateRequest;
+import com.malik.personal_website.dto.response.ContactMessageResponse;
+import com.malik.personal_website.dto.request.ContactMessageStatusUpdateRequest;
+import com.malik.personal_website.dto.mapper.ContactMessageMapper;
 import com.malik.personal_website.enums.ContactMessageStatus;
 import com.malik.personal_website.services.ContactMessageService;
 import jakarta.validation.Valid;
@@ -21,18 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminContactMessageController {
 
     private final ContactMessageService contactMessageService;
+    private final ContactMessageMapper contactMessageMapper;
 
     @GetMapping
     public List<ContactMessageResponse> getMessages(@RequestParam(required = false) ContactMessageStatus status) {
-        return contactMessageService.getAdminMessages(status)
-                .stream()
-                .map(ContactMessageResponse::from)
-                .toList();
+        return contactMessageMapper.toResponses(contactMessageService.getAdminMessages(status));
     }
 
     @GetMapping("/{id}")
     public ContactMessageResponse getMessage(@PathVariable Long id) {
-        return ContactMessageResponse.from(contactMessageService.getAdminMessage(id));
+        return contactMessageMapper.toResponse(contactMessageService.getAdminMessage(id));
     }
 
     @PatchMapping("/{id}/status")
@@ -40,6 +39,6 @@ public class AdminContactMessageController {
             @PathVariable Long id,
             @Valid @RequestBody ContactMessageStatusUpdateRequest request
     ) {
-        return ContactMessageResponse.from(contactMessageService.updateStatus(id, request.status()));
+        return contactMessageMapper.toResponse(contactMessageService.updateStatus(id, request.status()));
     }
 }

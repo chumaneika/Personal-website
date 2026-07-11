@@ -1,6 +1,6 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.HomeResponse;
+import com.malik.personal_website.dto.response.HomeResponse;
 import com.malik.personal_website.services.HomeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

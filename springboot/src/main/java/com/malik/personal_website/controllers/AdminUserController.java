@@ -1,6 +1,6 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.CurrentUserResponse;
+import com.malik.personal_website.dto.response.CurrentUserResponse;
 import java.util.Comparator;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

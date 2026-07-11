@@ -1,6 +1,6 @@
 package com.malik.personal_website.services;
 
-import com.malik.personal_website.dto.SkillRequest;
+import com.malik.personal_website.dto.request.SkillRequest;
 import com.malik.personal_website.entities.SkillCategoryEntity;
 import com.malik.personal_website.entities.SkillEntity;
 import com.malik.personal_website.exceptions.ResourceNotFoundException;

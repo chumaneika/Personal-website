@@ -1,6 +1,6 @@
 package com.malik.personal_website.services;
 
-import com.malik.personal_website.dto.ProfileRequest;
+import com.malik.personal_website.dto.request.ProfileRequest;
 import com.malik.personal_website.entities.ProfileEntity;
 import com.malik.personal_website.exceptions.ResourceNotFoundException;
 import com.malik.personal_website.repositories.ProfileRepository;

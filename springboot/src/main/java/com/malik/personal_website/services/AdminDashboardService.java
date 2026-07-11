@@ -1,6 +1,6 @@
 package com.malik.personal_website.services;
 
-import com.malik.personal_website.dto.DashboardSummaryResponse;
+import com.malik.personal_website.dto.response.DashboardSummaryResponse;
 import com.malik.personal_website.enums.ContactMessageStatus;
 import com.malik.personal_website.enums.PublicationStatus;
 import com.malik.personal_website.repositories.ContactMessageRepository;

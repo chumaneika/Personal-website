@@ -1,8 +1,9 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.SkillRequest;
-import com.malik.personal_website.dto.SkillResponse;
-import com.malik.personal_website.dto.SkillVisibilityUpdateRequest;
+import com.malik.personal_website.dto.request.SkillRequest;
+import com.malik.personal_website.dto.response.SkillResponse;
+import com.malik.personal_website.dto.request.SkillVisibilityUpdateRequest;
+import com.malik.personal_website.dto.mapper.SkillMapper;
 import com.malik.personal_website.services.SkillService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -25,29 +26,27 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminSkillController {
 
     private final SkillService skillService;
+    private final SkillMapper skillMapper;
 
     @GetMapping
     public List<SkillResponse> getSkills() {
-        return skillService.getAdminSkills()
-                .stream()
-                .map(SkillResponse::from)
-                .toList();
+        return skillMapper.toResponses(skillService.getAdminSkills());
     }
 
     @GetMapping("/{id}")
     public SkillResponse getSkill(@PathVariable Long id) {
-        return SkillResponse.from(skillService.getAdminSkill(id));
+        return skillMapper.toResponse(skillService.getAdminSkill(id));
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SkillResponse createSkill(@Valid @RequestBody SkillRequest request) {
-        return SkillResponse.from(skillService.createSkill(request));
+        return skillMapper.toResponse(skillService.createSkill(request));
     }
 
     @PutMapping("/{id}")
     public SkillResponse updateSkill(@PathVariable Long id, @Valid @RequestBody SkillRequest request) {
-        return SkillResponse.from(skillService.updateSkill(id, request));
+        return skillMapper.toResponse(skillService.updateSkill(id, request));
     }
 
     @PatchMapping("/{id}/visibility")
@@ -55,7 +54,7 @@ public class AdminSkillController {
             @PathVariable Long id,
             @Valid @RequestBody SkillVisibilityUpdateRequest request
     ) {
-        return SkillResponse.from(skillService.updateVisibility(id, request.visible()));
+        return skillMapper.toResponse(skillService.updateVisibility(id, request.visible()));
     }
 
     @DeleteMapping("/{id}")

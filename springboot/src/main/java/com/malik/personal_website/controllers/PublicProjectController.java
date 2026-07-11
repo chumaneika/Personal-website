@@ -1,7 +1,8 @@
 package com.malik.personal_website.controllers;
 
-import com.malik.personal_website.dto.ProjectResponse;
-import com.malik.personal_website.dto.ProjectSummaryResponse;
+import com.malik.personal_website.dto.response.ProjectResponse;
+import com.malik.personal_website.dto.response.ProjectSummaryResponse;
+import com.malik.personal_website.dto.mapper.ProjectMapper;
 import com.malik.personal_website.services.ProjectService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -16,17 +17,15 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicProjectController {
 
     private final ProjectService projectService;
+    private final ProjectMapper projectMapper;
 
     @GetMapping
     public List<ProjectSummaryResponse> getProjects() {
-        return projectService.getPublishedProjects()
-                .stream()
-                .map(ProjectSummaryResponse::from)
-                .toList();
+        return projectMapper.toSummaryResponses(projectService.getPublishedProjects());
     }
 
     @GetMapping("/{slug}")
     public ProjectResponse getProjectBySlug(@PathVariable String slug) {
-        return ProjectResponse.from(projectService.getPublishedProjectBySlug(slug));
+        return projectMapper.toResponse(projectService.getPublishedProjectBySlug(slug));
     }
 }
