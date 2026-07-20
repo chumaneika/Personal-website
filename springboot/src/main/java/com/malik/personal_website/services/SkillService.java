@@ -27,11 +27,6 @@ public class SkillService {
     }
 
     @Transactional(readOnly = true)
-    public List<SkillCategoryEntity> getCategories() {
-        return skillCategoryRepository.findAllByOrderByNameAsc();
-    }
-
-    @Transactional(readOnly = true)
     public List<SkillEntity> getAdminSkills() {
         return skillRepository.findAllByOrderBySortOrderAscNameAsc();
     }

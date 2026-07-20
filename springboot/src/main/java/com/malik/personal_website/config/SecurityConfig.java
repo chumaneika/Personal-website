@@ -31,6 +31,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
+    private final ApiSecurityErrorHandler apiSecurityErrorHandler;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -41,13 +42,18 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(apiSecurityErrorHandler)
+                        .accessDeniedHandler(apiSecurityErrorHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/meta/enums").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/home").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profile").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/articles", "/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/skills").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/skill-categories").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/contact-messages").permitAll()
                         .requestMatchers("/api/admin/**").hasRole(UserRole.ADMIN.name())
                         .requestMatchers("/error").permitAll()

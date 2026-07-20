@@ -3,6 +3,7 @@ package com.malik.personal_website.services;
 import com.malik.personal_website.dto.response.DashboardSummaryResponse;
 import com.malik.personal_website.enums.ContactMessageStatus;
 import com.malik.personal_website.enums.PublicationStatus;
+import com.malik.personal_website.repositories.ArticleRepository;
 import com.malik.personal_website.repositories.ContactMessageRepository;
 import com.malik.personal_website.repositories.ProjectRepository;
 import com.malik.personal_website.repositories.SkillRepository;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminDashboardService {
 
     private final ProjectRepository projectRepository;
+    private final ArticleRepository articleRepository;
     private final SkillRepository skillRepository;
     private final ContactMessageRepository contactMessageRepository;
 
@@ -25,6 +27,10 @@ public class AdminDashboardService {
                 projectRepository.countByStatus(PublicationStatus.DRAFT),
                 projectRepository.countByStatus(PublicationStatus.PUBLISHED),
                 projectRepository.countByStatus(PublicationStatus.ARCHIVED),
+                articleRepository.count(),
+                articleRepository.countByStatus(PublicationStatus.DRAFT),
+                articleRepository.countByStatus(PublicationStatus.PUBLISHED),
+                articleRepository.countByStatus(PublicationStatus.ARCHIVED),
                 skillRepository.count(),
                 skillRepository.countByVisibleTrue(),
                 skillRepository.countByVisibleFalse(),

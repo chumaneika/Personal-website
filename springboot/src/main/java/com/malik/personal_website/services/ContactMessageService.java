@@ -5,8 +5,9 @@ import com.malik.personal_website.entities.ContactMessageEntity;
 import com.malik.personal_website.enums.ContactMessageStatus;
 import com.malik.personal_website.exceptions.ResourceNotFoundException;
 import com.malik.personal_website.repositories.ContactMessageRepository;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,11 +29,11 @@ public class ContactMessageService {
     }
 
     @Transactional(readOnly = true)
-    public List<ContactMessageEntity> getAdminMessages(ContactMessageStatus status) {
+    public Page<ContactMessageEntity> getAdminMessages(ContactMessageStatus status, Pageable pageable) {
         if (status == null) {
-            return contactMessageRepository.findAllByOrderByCreatedAtDesc();
+            return contactMessageRepository.findAll(pageable);
         }
-        return contactMessageRepository.findByStatusOrderByCreatedAtDesc(status);
+        return contactMessageRepository.findByStatus(status, pageable);
     }
 
     @Transactional(readOnly = true)
@@ -45,6 +46,11 @@ public class ContactMessageService {
         ContactMessageEntity message = findMessage(id);
         message.setStatus(status);
         return contactMessageRepository.save(message);
+    }
+
+    @Transactional
+    public void deleteMessage(Long id) {
+        contactMessageRepository.delete(findMessage(id));
     }
 
     private ContactMessageEntity findMessage(Long id) {

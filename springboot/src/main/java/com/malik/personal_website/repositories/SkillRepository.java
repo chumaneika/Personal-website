@@ -12,6 +12,8 @@ public interface SkillRepository extends JpaRepository<SkillEntity, Long> {
 
     List<SkillEntity> findByVisibleTrueAndCategory_IdOrderBySortOrderAscNameAsc(Long categoryId);
 
+    boolean existsByCategory_Id(Long categoryId);
+
     long countByVisibleTrue();
 
     long countByVisibleFalse();

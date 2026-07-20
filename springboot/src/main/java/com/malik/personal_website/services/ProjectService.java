@@ -4,6 +4,7 @@ import com.malik.personal_website.dto.request.ProjectRequest;
 import com.malik.personal_website.entities.ProjectEntity;
 import com.malik.personal_website.enums.PublicationStatus;
 import com.malik.personal_website.exceptions.ResourceNotFoundException;
+import com.malik.personal_website.exceptions.ResourceConflictException;
 import com.malik.personal_website.repositories.ProjectRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class ProjectService {
         applyRequest(project, request);
 
         if (projectRepository.existsBySlug(project.getSlug())) {
-            throw new IllegalArgumentException("Project slug already exists: " + project.getSlug());
+            throw new ResourceConflictException("Project slug already exists: " + project.getSlug());
         }
 
         return projectRepository.save(project);
@@ -58,7 +59,7 @@ public class ProjectService {
         applyRequest(project, request);
 
         if (projectRepository.existsBySlugAndIdNot(project.getSlug(), id)) {
-            throw new IllegalArgumentException("Project slug already exists: " + project.getSlug());
+            throw new ResourceConflictException("Project slug already exists: " + project.getSlug());
         }
 
         return projectRepository.save(project);
