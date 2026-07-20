@@ -16,6 +16,10 @@ export type DashboardSummaryResponse = {
   draftProjects: number;
   publishedProjects: number;
   archivedProjects: number;
+  totalArticles: number;
+  draftArticles: number;
+  publishedArticles: number;
+  archivedArticles: number;
   totalSkills: number;
   visibleSkills: number;
   hiddenSkills: number;
@@ -125,6 +129,16 @@ export type ContactMessageResponse = {
   status: ContactMessageStatus;
   createdAt: string;
   updatedAt: string;
+};
+
+export type PageResponse<T> = {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
 };
 
 export type MetaEnumsResponse = {

@@ -199,7 +199,7 @@ export function SkillFormPage() {
           </label>
 
           {metaQuery.isError && (
-            <p className="muted-text">Skill categories could not be loaded from /meta/enums.</p>
+            <p className="muted-text">Skill categories could not be loaded from /admin/meta/enums.</p>
           )}
 
           <div className="form-actions">

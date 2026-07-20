@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { fetchContactMessages, updateContactMessageStatus } from '../shared/api/messages';
+import { deleteContactMessage, fetchContactMessages, updateContactMessageStatus } from '../shared/api/messages';
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { formatDateTime, formatStatus, previewText } from '../shared/lib/format';
@@ -11,9 +11,10 @@ type MessageFilter = ContactMessageStatus | 'ALL';
 
 export function MessagesPage() {
   const [statusFilter, setStatusFilter] = useState<MessageFilter>('ALL');
+  const [page, setPage] = useState(0);
   const messagesQuery = useQuery({
-    queryKey: ['contact-messages', statusFilter],
-    queryFn: () => fetchContactMessages(statusFilter === 'ALL' ? undefined : statusFilter),
+    queryKey: ['contact-messages', statusFilter, page],
+    queryFn: () => fetchContactMessages(statusFilter === 'ALL' ? undefined : statusFilter, page),
   });
 
   const statusMutation = useMutation({
@@ -25,7 +26,21 @@ export function MessagesPage() {
     },
   });
 
-  const messages = messagesQuery.data ?? [];
+  const deleteMutation = useMutation({
+    mutationFn: deleteContactMessage,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
+    },
+  });
+
+  const messages = messagesQuery.data?.content ?? [];
+
+  function handleDelete(id: number, senderName: string) {
+    if (window.confirm(`Delete the message from ${senderName} permanently?`)) {
+      deleteMutation.mutate(id);
+    }
+  }
 
   return (
     <section className="page-stack">
@@ -37,7 +52,13 @@ export function MessagesPage() {
       <div className="toolbar">
         <label>
           Status
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as MessageFilter)}>
+          <select
+            value={statusFilter}
+            onChange={(event) => {
+              setStatusFilter(event.target.value as MessageFilter);
+              setPage(0);
+            }}
+          >
             <option value="ALL">All statuses</option>
             {CONTACT_MESSAGE_STATUSES.map((status) => (
               <option key={status} value={status}>
@@ -113,6 +134,14 @@ export function MessagesPage() {
                           Archive
                         </button>
                       )}
+                      <button
+                        type="button"
+                        className="danger-link"
+                        disabled={deleteMutation.isPending}
+                        onClick={() => handleDelete(message.id, message.senderName)}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -122,9 +151,28 @@ export function MessagesPage() {
         </div>
       )}
 
+      {messagesQuery.data && messagesQuery.data.totalPages > 1 && (
+        <div className="action-row">
+          <button type="button" disabled={messagesQuery.data.first} onClick={() => setPage((value) => value - 1)}>
+            Previous
+          </button>
+          <span>
+            Page {messagesQuery.data.page + 1} of {messagesQuery.data.totalPages}
+          </span>
+          <button type="button" disabled={messagesQuery.data.last} onClick={() => setPage((value) => value + 1)}>
+            Next
+          </button>
+        </div>
+      )}
+
       {statusMutation.isError && (
         <p className="surface-state surface-state--error">
           {getApiErrorMessage(statusMutation.error, 'Could not update message status.')}
+        </p>
+      )}
+      {deleteMutation.isError && (
+        <p className="surface-state surface-state--error">
+          {getApiErrorMessage(deleteMutation.error, 'Could not delete message.')}
         </p>
       )}
     </section>

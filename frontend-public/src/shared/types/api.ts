@@ -66,13 +66,6 @@ export type SkillResponse = {
   updatedAt: string;
 };
 
-export type EnumValuesResponse = {
-  publicationStatuses: PublicationStatus[];
-  skillCategories: SkillCategoryResponse[];
-  skillLevels: SkillLevel[];
-  contactMessageStatuses: ContactMessageStatus[];
-};
-
 export type HomeResponse = {
   profile: ProfileResponse | null;
   projects: ProjectSummaryResponse[];

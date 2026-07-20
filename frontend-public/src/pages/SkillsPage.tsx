@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { CategoryFilter } from '../features/skills/CategoryFilter';
 import { SkillGroups } from '../features/skills/SkillGroups';
-import { fetchMetaEnums } from '../shared/api/meta';
+import { fetchSkillCategories } from '../shared/api/meta';
 import { fetchSkills } from '../shared/api/skills';
 import { LoadingState, PageState } from '../shared/components/PageState';
 import type { SkillCategoryResponse } from '../shared/types/api';
@@ -11,8 +11,8 @@ import { normalizeSkillCategories } from '../shared/utils/formatters';
 export function SkillsPage() {
   const [selectedCategory, setSelectedCategory] = useState<SkillCategoryResponse | null>(null);
   const metaQuery = useQuery({
-    queryKey: ['meta', 'enums'],
-    queryFn: fetchMetaEnums,
+    queryKey: ['skill-categories'],
+    queryFn: fetchSkillCategories,
   });
   const skillsQuery = useQuery({
     queryKey: ['skills', selectedCategory?.id ?? 'all'],
@@ -34,7 +34,7 @@ export function SkillsPage() {
   }
 
   const visibleSkills = skillsQuery.data?.filter((skill) => skill.visible !== false) ?? [];
-  const categories = normalizeSkillCategories(metaQuery.data?.skillCategories, visibleSkills);
+  const categories = normalizeSkillCategories(metaQuery.data, visibleSkills);
 
   return (
     <section className="stack-page">

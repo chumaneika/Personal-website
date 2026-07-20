@@ -1,14 +1,12 @@
-import type { EnumValuesResponse } from '../types/api';
+import type { SkillCategoryResponse } from '../types/api';
 import { httpClient } from './httpClient';
-import { requireObjectResponse } from './responseGuards';
 
-export async function fetchMetaEnums() {
-  const response = await httpClient.get<unknown>('/meta/enums');
-  const data = requireObjectResponse<EnumValuesResponse>(response.data, 'metadata');
+export async function fetchSkillCategories() {
+  const response = await httpClient.get<unknown>('/skill-categories');
 
-  if (!Array.isArray(data.skillCategories)) {
-    throw new Error('Invalid metadata response.');
+  if (!Array.isArray(response.data)) {
+    throw new Error('Invalid skill categories response.');
   }
 
-  return data;
+  return response.data as SkillCategoryResponse[];
 }
