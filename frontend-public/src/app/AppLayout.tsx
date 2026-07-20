@@ -1,13 +1,14 @@
 import { useLayoutEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { fetchProfile } from '../shared/api/profile';
+import { fetchHome } from '../shared/api/home';
 import { SocialLinks } from '../shared/components/SocialLinks';
 
 const navItems = [
   { to: '/', label: 'Home', end: true },
   { to: '/about', label: 'About' },
   { to: '/projects', label: 'Projects' },
+  { to: '/blog', label: 'Blog' },
   { to: '/skills', label: 'Skills' },
   { to: '/resume', label: 'Resume' },
   { to: '/contacts', label: 'Contacts' },
@@ -38,10 +39,11 @@ function getInitialTheme(): Theme {
 }
 
 export function AppLayout() {
-  const profileQuery = useQuery({
-    queryKey: ['profile'],
-    queryFn: fetchProfile,
+  const homeQuery = useQuery({
+    queryKey: ['home'],
+    queryFn: fetchHome,
   });
+  const profile = homeQuery.data?.profile ?? null;
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const year = new Date().getFullYear();
   const nextTheme = theme === 'light' ? 'dark' : 'light';
@@ -90,9 +92,9 @@ export function AppLayout() {
       <footer className="site-footer">
         <div>
           <strong>Malik Alikberov</strong>
-          {profileQuery.data?.email && <a href={`mailto:${profileQuery.data.email}`}>{profileQuery.data.email}</a>}
+          {profile?.email && <a href={`mailto:${profile.email}`}>{profile.email}</a>}
         </div>
-        <SocialLinks profile={profileQuery.data} />
+        <SocialLinks profile={profile} />
         <p>{year}</p>
       </footer>
     </div>

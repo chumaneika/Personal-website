@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { ArticleGrid } from '../features/article-list/ArticleGrid';
 import { ProjectGrid } from '../features/project-list/ProjectGrid';
 import { SkillGroups } from '../features/skills/SkillGroups';
+import { fetchArticles } from '../shared/api/articles';
 import { fetchHome } from '../shared/api/home';
 import { LoadingState, PageState } from '../shared/components/PageState';
 import { SocialLinks } from '../shared/components/SocialLinks';
@@ -11,6 +13,10 @@ export function HomePage() {
   const homeQuery = useQuery({
     queryKey: ['home'],
     queryFn: fetchHome,
+  });
+  const articlesQuery = useQuery({
+    queryKey: ['articles'],
+    queryFn: fetchArticles,
   });
 
   if (homeQuery.isLoading) {
@@ -104,6 +110,29 @@ export function HomePage() {
           <SkillGroups skills={visibleSkills} categories={skillCategories} />
         ) : (
           <PageState compact title="Skills are being updated" message="The public skill list is not available yet." />
+        )}
+      </section>
+
+      <section className="section-block" aria-labelledby="latest-articles">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Writing</p>
+            <h2 id="latest-articles">Latest articles</h2>
+          </div>
+          <Link className="text-link" to="/blog">
+            Blog
+          </Link>
+        </div>
+
+        {articlesQuery.isLoading && <LoadingState label="Loading articles..." />}
+        {articlesQuery.isError && (
+          <PageState compact title="Articles are unavailable" message="Published articles could not be loaded right now." />
+        )}
+        {articlesQuery.isSuccess && articlesQuery.data.length > 0 && (
+          <ArticleGrid articles={articlesQuery.data.slice(0, 3)} />
+        )}
+        {articlesQuery.isSuccess && articlesQuery.data.length === 0 && (
+          <PageState compact title="Articles are coming soon" message="Published articles will appear here." />
         )}
       </section>
     </>

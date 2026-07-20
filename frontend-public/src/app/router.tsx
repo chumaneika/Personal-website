@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { AboutPage } from '../pages/AboutPage';
+import { ArticleDetailsPage } from '../pages/ArticleDetailsPage';
+import { BlogPage } from '../pages/BlogPage';
 import { ContactPage } from '../pages/ContactPage';
 import { HomePage } from '../pages/HomePage';
 import { NotFoundPage } from '../pages/NotFoundPage';
@@ -29,6 +31,14 @@ export const router = createBrowserRouter([
       {
         path: 'projects/:slug',
         element: <ProjectDetailsPage />,
+      },
+      {
+        path: 'blog',
+        element: <BlogPage />,
+      },
+      {
+        path: 'blog/:slug',
+        element: <ArticleDetailsPage />,
       },
       {
         path: 'skills',

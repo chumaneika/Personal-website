@@ -146,7 +146,7 @@ export function ProjectFormPage() {
       form.reset(getProjectValues(project));
 
       if (!isEditing) {
-        navigate(`/projects/${project.id}/edit`, { replace: true });
+        navigate(`/projects/${project.id}/settings`, { replace: true });
       }
     },
   });
@@ -203,7 +203,7 @@ export function ProjectFormPage() {
       <div className="page-heading page-heading--row">
         <div>
           <p className="eyebrow">Portfolio content</p>
-          <h1>{isEditing ? 'Edit project' : 'Create project'}</h1>
+          <h1>{isEditing ? 'Project settings' : 'Create project'}</h1>
         </div>
         <Link className="button-link button-link--secondary" to="/projects">
           Back to projects
@@ -223,6 +223,12 @@ export function ProjectFormPage() {
           <span>Created {formatDateTime(project.createdAt)}</span>
           <span>Updated {formatDateTime(project.updatedAt)}</span>
         </div>
+      )}
+
+      {isEditing && project && (
+        <p className="surface-state">
+          Update the public description, technology stack, links, cover image, timeline, and publication status.
+        </p>
       )}
 
       {isEditing && project && (
@@ -339,11 +345,11 @@ export function ProjectFormPage() {
 
           <div className="form-actions">
             <button type="submit" disabled={saveMutation.isPending}>
-              {saveMutation.isPending ? 'Saving...' : isEditing ? 'Save project' : 'Create project'}
+              {saveMutation.isPending ? 'Saving...' : isEditing ? 'Save changes' : 'Create project'}
             </button>
           </div>
 
-          {saveMutation.isSuccess && <p className="form-note">Project saved.</p>}
+          {saveMutation.isSuccess && <p className="form-note">Project changes saved.</p>}
           {saveMutation.isError && (
             <p className="form-error">{getApiErrorMessage(saveMutation.error, 'Could not save project.')}</p>
           )}

@@ -21,7 +21,9 @@ export function AdminLayout() {
           <NavLink to="/">Dashboard</NavLink>
           <NavLink to="/profile">Profile</NavLink>
           <NavLink to="/projects">Projects</NavLink>
+          <NavLink to="/articles">Articles</NavLink>
           <NavLink to="/skills">Skills</NavLink>
+          <NavLink to="/skill-categories">Categories</NavLink>
           <NavLink to="/messages">Messages</NavLink>
           <NavLink to="/settings">Settings</NavLink>
         </nav>

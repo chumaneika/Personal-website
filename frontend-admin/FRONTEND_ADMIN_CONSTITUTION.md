@@ -65,7 +65,9 @@ Keep HTTP calls out of UI components. Use modules under `src/shared/api`:
 - `dashboard.ts`
 - `profile.ts`
 - `projects.ts`
+- `articles.ts`
 - `skills.ts`
+- `skillCategories.ts`
 - `messages.ts`
 - `meta.ts`
 - `health.ts`
@@ -80,9 +82,16 @@ Shared API contracts live in `src/shared/types/api.ts`.
 - `/projects`
 - `/projects/new`
 - `/projects/:id/edit`
+- `/projects/:id/settings`
+- `/articles`
+- `/articles/new`
+- `/articles/:id/edit`
 - `/skills`
 - `/skills/new`
 - `/skills/:id/edit`
+- `/skill-categories`
+- `/skill-categories/new`
+- `/skill-categories/:id/edit`
 - `/messages`
 - `/messages/:id`
 - `/settings`
@@ -96,12 +105,14 @@ Implemented admin domains:
 - Dashboard summary
 - Public profile management
 - Project CRUD and status management
+- Article CRUD and publication status management
 - Skill CRUD and visibility management
+- Skill category CRUD
 - Contact message viewing and status management
 - Technical settings/session page
 
-Do not add image upload, admin user management, password change, registration,
-or blog/editorial management until the backend exposes those endpoints.
+Do not add image upload, admin user management, password change, or registration
+until the backend exposes those endpoints.
 
 ## UI
 

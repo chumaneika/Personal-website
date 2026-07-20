@@ -639,6 +639,14 @@ main {
   font-weight: 900;
 }
 
+.article-card__meta,
+.article-detail__date {
+  color: var(--blue) !important;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem !important;
+  font-weight: 900;
+}
+
 .project-card__actions {
   display: flex;
   flex-wrap: wrap;
@@ -810,6 +818,10 @@ main {
     color: var(--ink);
     font-size: 1.6rem;
   }
+}
+
+.article-detail__content {
+  max-width: 860px;
 }
 
 .category-filter {

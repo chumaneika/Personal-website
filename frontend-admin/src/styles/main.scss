@@ -127,7 +127,7 @@ button {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 
   article {
@@ -263,6 +263,13 @@ button:disabled {
   color: #9a3412;
 }
 
+.surface-state--success {
+  border-color: #b7d6c3;
+  background: #f0faf4;
+  color: #237a4b;
+  font-weight: 800;
+}
+
 .muted-text {
   margin: 0;
   color: #68727d;
@@ -389,6 +396,10 @@ table {
   border-collapse: collapse;
 }
 
+.compact-table {
+  min-width: 520px;
+}
+
 th,
 td {
   border-bottom: 1px solid #edf0ea;
@@ -408,8 +419,27 @@ tbody tr:last-child td {
   border-bottom: 0;
 }
 
+.table-primary-link {
+  color: #1e2329;
+  font-weight: 800;
+}
+
 .highlight-row {
   background: #fff8e6;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background 120ms ease;
+
+  &:hover {
+    background: #edf5fb;
+  }
+
+  &:focus-visible {
+    outline: 3px solid #1d5c8d;
+    outline-offset: -3px;
+  }
 }
 
 .action-row {
@@ -422,6 +452,18 @@ tbody tr:last-child td {
     cursor: pointer;
     font-weight: 800;
     padding: 7px 10px;
+  }
+
+  .action-link {
+    border-radius: 8px;
+    background: #e5eef5;
+    color: #174f79;
+    font-weight: 800;
+    padding: 7px 10px;
+
+    &:hover {
+      text-decoration: none;
+    }
   }
 
   .danger-link {

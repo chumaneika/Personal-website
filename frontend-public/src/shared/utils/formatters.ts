@@ -57,6 +57,22 @@ export function formatMonthYear(value: string | null | undefined) {
   }).format(date);
 }
 
+export function formatDate(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+  }).format(date);
+}
+
 export function groupSkillsByCategory(skills: SkillResponse[]) {
   return skills.reduce<Record<number, SkillResponse[]>>((groups, skill) => {
     if (skill.visible === false) {

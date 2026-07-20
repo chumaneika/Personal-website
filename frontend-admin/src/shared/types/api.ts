@@ -97,8 +97,33 @@ export type ProjectRequest = {
   completedAt?: string | null;
 };
 
+export type ArticleResponse = {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string | null;
+  content: string;
+  coverImageUrl: string | null;
+  status: PublicationStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ArticleRequest = {
+  title: string;
+  slug: string;
+  summary?: string | null;
+  content: string;
+  coverImageUrl?: string | null;
+  status?: PublicationStatus;
+};
+
 export type SkillCategoryResponse = {
   id: number;
+  name: string;
+};
+
+export type SkillCategoryRequest = {
   name: string;
 };
 

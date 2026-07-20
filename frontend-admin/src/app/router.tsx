@@ -6,6 +6,10 @@ import { LoginRoute, ProtectedRoute } from './RouteGuards';
 const DashboardPage = lazy(() =>
   import('../pages/DashboardPage').then(({ DashboardPage }) => ({ default: DashboardPage })),
 );
+const ArticleFormPage = lazy(() =>
+  import('../pages/ArticleFormPage').then(({ ArticleFormPage }) => ({ default: ArticleFormPage })),
+);
+const ArticlesPage = lazy(() => import('../pages/ArticlesPage').then(({ ArticlesPage }) => ({ default: ArticlesPage })));
 const LoginPage = lazy(() => import('../pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })));
 const MessageDetailPage = lazy(() =>
   import('../pages/MessageDetailPage').then(({ MessageDetailPage }) => ({ default: MessageDetailPage })),
@@ -22,6 +26,12 @@ const SkillFormPage = lazy(() =>
   import('../pages/SkillFormPage').then(({ SkillFormPage }) => ({ default: SkillFormPage })),
 );
 const SkillsPage = lazy(() => import('../pages/SkillsPage').then(({ SkillsPage }) => ({ default: SkillsPage })));
+const SkillCategoriesPage = lazy(() =>
+  import('../pages/SkillCategoriesPage').then(({ SkillCategoriesPage }) => ({ default: SkillCategoriesPage })),
+);
+const SkillCategoryFormPage = lazy(() =>
+  import('../pages/SkillCategoryFormPage').then(({ SkillCategoryFormPage }) => ({ default: SkillCategoryFormPage })),
+);
 
 function lazyRoute(element: ReactElement) {
   return <Suspense fallback={<p className="surface-state">Loading page...</p>}>{element}</Suspense>;
@@ -65,6 +75,22 @@ export const router = createBrowserRouter([
             element: lazyRoute(<ProjectFormPage />),
           },
           {
+            path: 'projects/:id/settings',
+            element: lazyRoute(<ProjectFormPage />),
+          },
+          {
+            path: 'articles',
+            element: lazyRoute(<ArticlesPage />),
+          },
+          {
+            path: 'articles/new',
+            element: lazyRoute(<ArticleFormPage />),
+          },
+          {
+            path: 'articles/:id/edit',
+            element: lazyRoute(<ArticleFormPage />),
+          },
+          {
             path: 'skills',
             element: lazyRoute(<SkillsPage />),
           },
@@ -75,6 +101,18 @@ export const router = createBrowserRouter([
           {
             path: 'skills/:id/edit',
             element: lazyRoute(<SkillFormPage />),
+          },
+          {
+            path: 'skill-categories',
+            element: lazyRoute(<SkillCategoriesPage />),
+          },
+          {
+            path: 'skill-categories/new',
+            element: lazyRoute(<SkillCategoryFormPage />),
+          },
+          {
+            path: 'skill-categories/:id/edit',
+            element: lazyRoute(<SkillCategoryFormPage />),
           },
           {
             path: 'messages',

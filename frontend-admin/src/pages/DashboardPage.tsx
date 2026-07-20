@@ -22,6 +22,15 @@ export function DashboardPage() {
           ],
         },
         {
+          title: 'Articles',
+          metrics: [
+            ['Total', dashboard.totalArticles],
+            ['Draft', dashboard.draftArticles],
+            ['Published', dashboard.publishedArticles],
+            ['Archived', dashboard.archivedArticles],
+          ],
+        },
+        {
           title: 'Skills',
           metrics: [
             ['Total', dashboard.totalSkills],
@@ -82,6 +91,9 @@ export function DashboardPage() {
             <div className="quick-actions">
               <Link className="button-link" to="/projects/new">
                 Create project
+              </Link>
+              <Link className="button-link" to="/articles/new">
+                Create article
               </Link>
               <Link className="button-link button-link--secondary" to="/profile">
                 Edit profile

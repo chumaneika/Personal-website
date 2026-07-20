@@ -117,7 +117,9 @@ export function ProjectsPage() {
               {projects.map((project) => (
                 <tr key={project.id}>
                   <td>
-                    <strong>{project.title}</strong>
+                    <Link className="table-primary-link" to={`/projects/${project.id}/settings`}>
+                      {project.title}
+                    </Link>
                   </td>
                   <td>{project.slug}</td>
                   <td>
@@ -134,7 +136,9 @@ export function ProjectsPage() {
                   </td>
                   <td>
                     <div className="action-row">
-                      <Link to={`/projects/${project.id}/edit`}>Edit</Link>
+                      <Link className="action-link" to={`/projects/${project.id}/settings`}>
+                        Project settings
+                      </Link>
                       {project.status !== 'PUBLISHED' && (
                         <button
                           type="button"

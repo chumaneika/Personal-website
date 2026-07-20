@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import type { KeyboardEvent, MouseEvent } from 'react';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { deleteContactMessage, fetchContactMessages, updateContactMessageStatus } from '../shared/api/messages';
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
@@ -9,7 +10,12 @@ import { ContactMessageStatus, CONTACT_MESSAGE_STATUSES } from '../shared/types/
 
 type MessageFilter = ContactMessageStatus | 'ALL';
 
+function isInteractiveTarget(target: EventTarget | null) {
+  return target instanceof Element && Boolean(target.closest('a, button, input, select, textarea'));
+}
+
 export function MessagesPage() {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<MessageFilter>('ALL');
   const [page, setPage] = useState(0);
   const messagesQuery = useQuery({
@@ -40,6 +46,21 @@ export function MessagesPage() {
     if (window.confirm(`Delete the message from ${senderName} permanently?`)) {
       deleteMutation.mutate(id);
     }
+  }
+
+  function handleRowClick(event: MouseEvent<HTMLTableRowElement>, id: number) {
+    if (!isInteractiveTarget(event.target)) {
+      navigate(`/messages/${id}`);
+    }
+  }
+
+  function handleRowKeyDown(event: KeyboardEvent<HTMLTableRowElement>, id: number) {
+    if (isInteractiveTarget(event.target) || (event.key !== 'Enter' && event.key !== ' ')) {
+      return;
+    }
+
+    event.preventDefault();
+    navigate(`/messages/${id}`);
   }
 
   return (
@@ -99,7 +120,14 @@ export function MessagesPage() {
             </thead>
             <tbody>
               {messages.map((message) => (
-                <tr key={message.id} className={message.status === 'NEW' ? 'highlight-row' : undefined}>
+                <tr
+                  key={message.id}
+                  className={`clickable-row${message.status === 'NEW' ? ' highlight-row' : ''}`}
+                  tabIndex={0}
+                  aria-label={`Open message from ${message.senderName}`}
+                  onClick={(event) => handleRowClick(event, message.id)}
+                  onKeyDown={(event) => handleRowKeyDown(event, message.id)}
+                >
                   <td>
                     <strong>{message.senderName}</strong>
                   </td>
@@ -115,7 +143,6 @@ export function MessagesPage() {
                   <td>{previewText(message.message)}</td>
                   <td>
                     <div className="action-row">
-                      <Link to={`/messages/${message.id}`}>Open</Link>
                       {message.status !== 'READ' && (
                         <button
                           type="button"

@@ -72,9 +72,14 @@ export function SkillsPage() {
           <p className="eyebrow">Capabilities</p>
           <h1>Skills</h1>
         </div>
-        <Link className="button-link" to="/skills/new">
-          Add skill
-        </Link>
+        <div className="quick-actions">
+          <Link className="button-link button-link--secondary" to="/skill-categories">
+            Manage categories
+          </Link>
+          <Link className="button-link" to="/skills/new">
+            Add skill
+          </Link>
+        </div>
       </div>
 
       <div className="toolbar">

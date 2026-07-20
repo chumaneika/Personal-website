@@ -50,6 +50,21 @@ export type ProjectResponse = ProjectSummaryResponse & {
   updatedAt: string;
 };
 
+export type ArticleSummaryResponse = {
+  id: number;
+  title: string;
+  slug: string;
+  summary: string | null;
+  coverImageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ArticleResponse = ArticleSummaryResponse & {
+  content: string;
+  status: PublicationStatus;
+};
+
 export type SkillCategoryResponse = {
   id: number;
   name: string;
