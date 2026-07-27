@@ -1,0 +1,26 @@
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+http://127.0.0.1:2019 {
+	respond /healthz 204
+}
+
+{$PUBLIC_DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	reverse_proxy frontend-public:8080
+}
+
+{$ADMIN_DOMAIN} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	reverse_proxy frontend-admin:8080
+}

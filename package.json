@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": "22.17.1"
+  },
   "workspaces": [
     "frontend-public",
     "frontend-admin"
@@ -13,11 +16,15 @@
     "typecheck": "npm run typecheck --workspaces",
     "lint": "npm run lint --workspaces",
     "lint:fix": "npm run lint:fix --workspaces",
-    "format": "prettier --write \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
-    "format:check": "prettier --check \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
+    "format": "prettier --write \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"ops/frontend/*.mjs\" \"docs/**/*.md\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
+    "format:check": "prettier --check \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"ops/frontend/*.mjs\" \"docs/**/*.md\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
     "test": "vitest run",
     "test:watch": "vitest",
-    "build": "npm run build --workspaces",
+    "build:public": "npm run build:production --workspace @personal-website/frontend-public && npm run verify:build:public",
+    "build:admin": "npm run build:production --workspace @personal-website/frontend-admin && npm run verify:build:admin",
+    "build": "npm run build:public && npm run build:admin",
+    "verify:build:public": "node ops/frontend/verify-build.mjs frontend-public",
+    "verify:build:admin": "node ops/frontend/verify-build.mjs frontend-admin",
     "quality": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
     "preview:public": "npm run preview --workspace @personal-website/frontend-public",
     "preview:admin": "npm run preview --workspace @personal-website/frontend-admin"

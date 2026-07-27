@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.env
+.env.*
+backups
+springboot
+**/node_modules
+**/dist
+**/coverage
+**/*.log
+.DS_Store

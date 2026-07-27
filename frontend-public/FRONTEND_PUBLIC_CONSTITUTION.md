@@ -124,8 +124,10 @@ src
 Пример:
 
 ```text
-VITE_API_BASE_URL=http://localhost:8080/api/v1
+VITE_PUBLIC_API_URL=http://localhost:8080/api
 ```
+
+When the variable is absent, the frontend uses the same-origin `/api` path.
 
 ---
 

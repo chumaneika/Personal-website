@@ -2,6 +2,16 @@
 
 set -eu
 
+if [ -n "${POSTGRES_PASSWORD_FILE:-}" ]; then
+  if [ ! -r "$POSTGRES_PASSWORD_FILE" ]; then
+    echo "PostgreSQL password file is not readable" >&2
+    exit 1
+  fi
+
+  PGPASSWORD=$(cat "$POSTGRES_PASSWORD_FILE")
+  export PGPASSWORD
+fi
+
 archive_path=${1:-}
 
 if [ -z "$archive_path" ]; then

@@ -5,17 +5,20 @@ on:
     branches:
       - main
   pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  frontend:
-    name: Frontend quality
+  frontend-quality:
+    name: Frontend / Quality
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -23,20 +26,58 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up fixed Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Run frontend quality gate
-        run: npm run quality
+      - name: Check formatting
+        run: npm run format:check
 
-  backend:
-    name: Backend and PostgreSQL migrations
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run type checks
+        run: npm run typecheck
+
+      - name: Run frontend tests
+        run: npm run test
+
+  frontend-build:
+    name: Frontend / Build (${{ matrix.application }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - application: public
+          - application: admin
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up fixed Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build ${{ matrix.application }} frontend
+        run: npm run build:${{ matrix.application }}
+
+  backend-tests:
+    name: Backend / Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -44,13 +85,140 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up fixed Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version-file: .java-version
           cache: maven
+          cache-dependency-path: springboot/pom.xml
 
-      - name: Run backend and migration tests
+      - name: Run backend tests
         working-directory: springboot
-        run: ./mvnw --batch-mode test
+        run: ./mvnw --batch-mode --no-transfer-progress test
+
+  database-migrations:
+    name: Database / PostgreSQL migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up fixed Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          cache: maven
+          cache-dependency-path: springboot/pom.xml
+
+      - name: Require Docker for Testcontainers
+        run: docker info
+
+      - name: Test Flyway and Hibernate against PostgreSQL
+        working-directory: springboot
+        run: >-
+          ./mvnw --batch-mode --no-transfer-progress
+          -Dtest=PostgreSqlMigrationIntegrationTests test
+
+      - name: Require migration tests to execute
+        run: >-
+          grep -Eq
+          'tests="2" errors="0" skipped="0" failures="0"'
+          springboot/target/surefire-reports/TEST-com.malik.personal_website.PostgreSqlMigrationIntegrationTests.xml
+
+  docker-build:
+    name: Deployment / Docker build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_SECRETS_DIRECTORY: /tmp/personal-website-ci-secrets
+      RELEASE_VERSION: ci
+      PUBLIC_DOMAIN: public.example.invalid
+      ADMIN_DOMAIN: admin.example.invalid
+      ACME_EMAIL: ci@example.invalid
+      POSTGRES_DB: personal_website_ci
+      POSTGRES_USER: personal_website_ci
+      APP_ADMIN_EMAIL: admin@example.invalid
+      APP_CORS_ALLOWED_ORIGINS: https://public.example.invalid,https://admin.example.invalid
+      SPRING_PROFILES_ACTIVE: prod
+      DOCKER_BUILDKIT: '1'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare non-production secret files
+        run: |
+          install -d -m 700 "$APP_SECRETS_DIRECTORY"
+          printf '%s' 'ci-database-password-not-for-production' > "$APP_SECRETS_DIRECTORY/SPRING_DATASOURCE_PASSWORD"
+          printf '%s' 'ci-admin-password-not-for-production-123' > "$APP_SECRETS_DIRECTORY/APP_ADMIN_PASSWORD"
+          touch "$APP_SECRETS_DIRECTORY/APP_ADMIN_RECOVERY_PASSWORD"
+          touch "$APP_SECRETS_DIRECTORY/SPRING_MAIL_PASSWORD"
+          chmod 600 "$APP_SECRETS_DIRECTORY"/*
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+      - name: Build deployment images
+        run: docker compose build
+
+      - name: Verify non-root runtime users
+        run: |
+          test "$(docker image inspect "personal-website-backend:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "app"
+          test "$(docker image inspect "personal-website-frontend-public:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "nginx"
+          test "$(docker image inspect "personal-website-frontend-admin:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "nginx"
+          test "$(docker image inspect "personal-website-edge-proxy:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "caddy"
+
+      - name: Validate reverse proxy configuration
+        run: >-
+          docker run --rm
+          --env PUBLIC_DOMAIN
+          --env ADMIN_DOMAIN
+          --env ACME_EMAIL
+          "personal-website-edge-proxy:${RELEASE_VERSION}"
+          validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+      - name: Verify SPA fallbacks
+        run: |
+          docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --entrypoint /bin/sh "personal-website-frontend-public:${RELEASE_VERSION}" \
+            -c 'nginx; wget -q -O /tmp/index.html http://127.0.0.1:8080/; wget -q -O /tmp/route.html http://127.0.0.1:8080/projects/ci-smoke; cmp /tmp/index.html /tmp/route.html; nginx -s quit'
+          docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
+            --security-opt no-new-privileges:true \
+            --entrypoint /bin/sh "personal-website-frontend-admin:${RELEASE_VERSION}" \
+            -c 'nginx; wget -q -O /tmp/index.html http://127.0.0.1:8080/; wget -q -O /tmp/route.html http://127.0.0.1:8080/projects/new; cmp /tmp/index.html /tmp/route.html; nginx -s quit'
+
+  required:
+    name: CI / Required
+    if: always()
+    needs:
+      - frontend-quality
+      - frontend-build
+      - backend-tests
+      - database-migrations
+      - docker-build
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Require every CI job to pass
+        env:
+          FRONTEND_QUALITY: ${{ needs.frontend-quality.result }}
+          FRONTEND_BUILD: ${{ needs.frontend-build.result }}
+          BACKEND_TESTS: ${{ needs.backend-tests.result }}
+          DATABASE_MIGRATIONS: ${{ needs.database-migrations.result }}
+          DOCKER_BUILD: ${{ needs.docker-build.result }}
+        run: |
+          for result in \
+            "$FRONTEND_QUALITY" \
+            "$FRONTEND_BUILD" \
+            "$BACKEND_TESTS" \
+            "$DATABASE_MIGRATIONS" \
+            "$DOCKER_BUILD"
+          do
+            test "$result" = "success"
+          done

@@ -1,21 +1,24 @@
 # syntax=docker/dockerfile:1
 
-FROM eclipse-temurin:17-jdk-alpine AS build
+FROM eclipse-temurin:17.0.19_10-jdk-jammy AS build
 
 WORKDIR /app
 
 COPY .mvn .mvn
 COPY mvnw pom.xml ./
-RUN chmod +x mvnw && ./mvnw -q -DskipTests dependency:go-offline
+RUN chmod +x mvnw
 
 COPY src src
-RUN ./mvnw -q -DskipTests package && cp target/*.jar app.jar
+RUN --mount=type=cache,target=/root/.m2 \
+    ./mvnw -DskipTests package \
+    && cp target/*.jar app.jar
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17.0.19_10-jre-jammy
 
 WORKDIR /app
 
-RUN addgroup -S app && adduser -S app -G app
+RUN groupadd --system app \
+    && useradd --system --gid app --no-create-home app
 
 COPY --from=build /app/app.jar app.jar
 
