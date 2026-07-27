@@ -5,7 +5,11 @@ import { deleteProject, fetchProjects, updateProjectStatus } from '../shared/api
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
-import { ProjectResponse, PublicationStatus, PUBLICATION_STATUSES } from '../shared/types/api';
+import {
+  type ProjectResponse,
+  type PublicationStatus,
+  PUBLICATION_STATUSES,
+} from '../shared/types/api';
 
 type ProjectFilter = PublicationStatus | 'ALL';
 
@@ -21,7 +25,8 @@ export function ProjectsPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: PublicationStatus }) => updateProjectStatus(id, status),
+    mutationFn: ({ id, status }: { id: number; status: PublicationStatus }) =>
+      updateProjectStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
@@ -71,7 +76,10 @@ export function ProjectsPage() {
       <div className="toolbar">
         <label>
           Status
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ProjectFilter)}>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as ProjectFilter)}
+          >
             <option value="ALL">All statuses</option>
             {PUBLICATION_STATUSES.map((status) => (
               <option key={status} value={status}>
@@ -130,8 +138,12 @@ export function ProjectsPage() {
                   <td>{formatDateTime(project.updatedAt)}</td>
                   <td>
                     <div className="indicator-row">
-                      <span className={project.githubUrl ? 'indicator indicator--on' : 'indicator'}>GitHub</span>
-                      <span className={project.demoUrl ? 'indicator indicator--on' : 'indicator'}>Demo</span>
+                      <span className={project.githubUrl ? 'indicator indicator--on' : 'indicator'}>
+                        GitHub
+                      </span>
+                      <span className={project.demoUrl ? 'indicator indicator--on' : 'indicator'}>
+                        Demo
+                      </span>
                     </div>
                   </td>
                   <td>

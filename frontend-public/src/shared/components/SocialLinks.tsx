@@ -11,7 +11,11 @@ type SocialLink = {
   href: string;
 };
 
-export function SocialLinks({ profile, includeEmail = false, className = 'social-links' }: SocialLinksProps) {
+export function SocialLinks({
+  profile,
+  includeEmail = false,
+  className = 'social-links',
+}: SocialLinksProps) {
   const links = [
     includeEmail && profile?.email
       ? {
@@ -46,7 +50,12 @@ export function SocialLinks({ profile, includeEmail = false, className = 'social
   return (
     <div className={className}>
       {links.map((link) => (
-        <a key={link.href} href={link.href} target={link.href.startsWith('mailto:') ? undefined : '_blank'} rel="noreferrer">
+        <a
+          key={link.href}
+          href={link.href}
+          target={link.href.startsWith('mailto:') ? undefined : '_blank'}
+          rel="noreferrer"
+        >
           {link.label}
         </a>
       ))}

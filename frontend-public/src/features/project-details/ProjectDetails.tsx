@@ -20,7 +20,12 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
 
         <div className="button-row">
           {project.githubUrl && (
-            <a className="button button--secondary" href={project.githubUrl} target="_blank" rel="noreferrer">
+            <a
+              className="button button--secondary"
+              href={project.githubUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
               GitHub
             </a>
           )}
@@ -32,7 +37,9 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
         </div>
       </header>
 
-      {project.coverImageUrl && <img className="project-detail__cover" src={project.coverImageUrl} alt="" />}
+      {project.coverImageUrl && (
+        <img className="project-detail__cover" src={project.coverImageUrl} alt="" />
+      )}
 
       <div className="project-detail__meta">
         {technologies.length > 0 && (

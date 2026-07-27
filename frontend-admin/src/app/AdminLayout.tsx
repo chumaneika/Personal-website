@@ -1,14 +1,20 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { useMutation } from '@tanstack/react-query';
 import { queryClient } from '../shared/api/queryClient';
-import { clearAuthSession } from '../shared/api/auth';
+import { signOut } from '../shared/api/auth';
 
 export function AdminLayout() {
   const navigate = useNavigate();
+  const logoutMutation = useMutation({
+    mutationFn: signOut,
+    onSuccess: () => {
+      queryClient.clear();
+      navigate('/login', { replace: true });
+    },
+  });
 
   function handleLogout() {
-    clearAuthSession();
-    queryClient.clear();
-    navigate('/login', { replace: true });
+    logoutMutation.mutate();
   }
 
   return (
@@ -27,8 +33,13 @@ export function AdminLayout() {
           <NavLink to="/messages">Messages</NavLink>
           <NavLink to="/settings">Settings</NavLink>
         </nav>
-        <button className="sidebar-logout" type="button" onClick={handleLogout}>
-          Logout
+        <button
+          className="sidebar-logout"
+          type="button"
+          disabled={logoutMutation.isPending}
+          onClick={handleLogout}
+        >
+          {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
         </button>
       </aside>
       <main className="admin-main">

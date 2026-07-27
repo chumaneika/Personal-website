@@ -91,6 +91,7 @@ export type ContactMessageRequest = {
   senderName: string;
   senderEmail: string;
   message: string;
+  website?: string;
 };
 
 export type ContactMessageResponse = ContactMessageRequest & {

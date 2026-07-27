@@ -1,0 +1,5 @@
+node_modules/
+**/dist/
+springboot/
+backups/
+package-lock.json

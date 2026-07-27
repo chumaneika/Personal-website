@@ -3,7 +3,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { signIn } from '../../shared/api/auth';
-import { LoginFormValues, loginSchema } from './loginSchema';
+import { queryClient } from '../../shared/api/queryClient';
+import { getApiErrorMessage } from '../../shared/lib/errors';
+import { type LoginFormValues, loginSchema } from './loginSchema';
 
 export function LoginForm() {
   const navigate = useNavigate();
@@ -17,7 +19,8 @@ export function LoginForm() {
 
   const loginMutation = useMutation({
     mutationFn: signIn,
-    onSuccess: () => {
+    onSuccess: (admin) => {
+      queryClient.setQueryData(['current-admin'], admin);
       navigate('/', { replace: true });
     },
   });
@@ -45,7 +48,12 @@ export function LoginForm() {
       </button>
 
       {loginMutation.isError && (
-        <p className="form-error">Could not sign in. Check the admin email and password.</p>
+        <p className="form-error">
+          {getApiErrorMessage(
+            loginMutation.error,
+            'Could not sign in. Check the admin email and password.',
+          )}
+        </p>
       )}
     </form>
   );

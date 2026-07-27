@@ -40,7 +40,11 @@ export function ArticleDetailsPage() {
       <PageState
         eyebrow={notFound ? '404' : 'Article'}
         title={notFound ? 'Article not found' : 'Article is unavailable'}
-        message={notFound ? 'This article is not published or does not exist.' : 'The article could not be loaded right now.'}
+        message={
+          notFound
+            ? 'This article is not published or does not exist.'
+            : 'The article could not be loaded right now.'
+        }
         action={
           <Link className="button button--secondary" to="/blog">
             Blog
@@ -77,13 +81,18 @@ export function ArticleDetailsPage() {
         <h1>{article.title}</h1>
         {article.summary && <p className="lead">{article.summary}</p>}
         <p className="article-detail__date">
-          {[publishedAt && `Published ${publishedAt}`, updatedAt !== publishedAt && updatedAt && `Updated ${updatedAt}`]
+          {[
+            publishedAt && `Published ${publishedAt}`,
+            updatedAt !== publishedAt && updatedAt && `Updated ${updatedAt}`,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </p>
       </header>
 
-      {article.coverImageUrl && <img className="project-detail__cover" src={article.coverImageUrl} alt="" />}
+      {article.coverImageUrl && (
+        <img className="project-detail__cover" src={article.coverImageUrl} alt="" />
+      )}
 
       <section className="content-section article-detail__content">
         <Prose content={article.content} fallback="Article content is being updated." />

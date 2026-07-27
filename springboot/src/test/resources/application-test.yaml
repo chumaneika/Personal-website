@@ -6,13 +6,20 @@ spring:
     driver-class-name: org.h2.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
         format_sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
 
 app:
   admin:
     initializer:
       enabled: false
+  contact:
+    notifications:
+      email:
+        enabled: false

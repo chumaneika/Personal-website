@@ -14,13 +14,21 @@ import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { nullableText } from '../shared/lib/form';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
-import { ProjectRequest, ProjectResponse, PublicationStatus, PUBLICATION_STATUSES } from '../shared/types/api';
+import {
+  type ProjectRequest,
+  type ProjectResponse,
+  type PublicationStatus,
+  PUBLICATION_STATUSES,
+} from '../shared/types/api';
 
 const slugRegex = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/;
 const optionalUrl = z
   .string()
   .max(512, 'Use 512 characters or fewer.')
-  .refine((value) => value.length === 0 || z.string().url().safeParse(value).success, 'Enter a valid URL.');
+  .refine(
+    (value) => value.length === 0 || z.string().url().safeParse(value).success,
+    'Enter a valid URL.',
+  );
 
 const projectSchema = z
   .object({
@@ -43,10 +51,13 @@ const projectSchema = z
     startedAt: z.string(),
     completedAt: z.string(),
   })
-  .refine((values) => !values.startedAt || !values.completedAt || values.completedAt >= values.startedAt, {
-    message: 'Completed date cannot be before started date.',
-    path: ['completedAt'],
-  });
+  .refine(
+    (values) => !values.startedAt || !values.completedAt || values.completedAt >= values.startedAt,
+    {
+      message: 'Completed date cannot be before started date.',
+      path: ['completedAt'],
+    },
+  );
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
@@ -165,7 +176,9 @@ export function ProjectFormPage() {
     if (
       values.status === 'PUBLISHED' &&
       shouldConfirmPublish(values) &&
-      !window.confirm('This project has empty public description fields. Save it as published anyway?')
+      !window.confirm(
+        'This project has empty public description fields. Save it as published anyway?',
+      )
     ) {
       return;
     }
@@ -227,7 +240,8 @@ export function ProjectFormPage() {
 
       {isEditing && project && (
         <p className="surface-state">
-          Update the public description, technology stack, links, cover image, timeline, and publication status.
+          Update the public description, technology stack, links, cover image, timeline, and
+          publication status.
         </p>
       )}
 
@@ -249,7 +263,9 @@ export function ProjectFormPage() {
             ))}
           </div>
           {statusMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(statusMutation.error, 'Could not update status.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(statusMutation.error, 'Could not update status.')}
+            </p>
           )}
         </section>
       )}
@@ -283,13 +299,17 @@ export function ProjectFormPage() {
           <label>
             Short description
             <textarea rows={3} {...form.register('shortDescription')} />
-            {form.formState.errors.shortDescription && <span>{form.formState.errors.shortDescription.message}</span>}
+            {form.formState.errors.shortDescription && (
+              <span>{form.formState.errors.shortDescription.message}</span>
+            )}
           </label>
 
           <label>
             Full description
             <textarea rows={6} {...form.register('fullDescription')} />
-            {form.formState.errors.fullDescription && <span>{form.formState.errors.fullDescription.message}</span>}
+            {form.formState.errors.fullDescription && (
+              <span>{form.formState.errors.fullDescription.message}</span>
+            )}
           </label>
 
           <div className="form-grid">
@@ -312,34 +332,46 @@ export function ProjectFormPage() {
           <label>
             Technology stack
             <textarea rows={4} {...form.register('technologyStack')} />
-            {form.formState.errors.technologyStack && <span>{form.formState.errors.technologyStack.message}</span>}
+            {form.formState.errors.technologyStack && (
+              <span>{form.formState.errors.technologyStack.message}</span>
+            )}
           </label>
 
           <div className="form-grid">
             <label>
               GitHub URL
               <input type="url" {...form.register('githubUrl')} />
-              {form.formState.errors.githubUrl && <span>{form.formState.errors.githubUrl.message}</span>}
+              {form.formState.errors.githubUrl && (
+                <span>{form.formState.errors.githubUrl.message}</span>
+              )}
             </label>
             <label>
               Demo URL
               <input type="url" {...form.register('demoUrl')} />
-              {form.formState.errors.demoUrl && <span>{form.formState.errors.demoUrl.message}</span>}
+              {form.formState.errors.demoUrl && (
+                <span>{form.formState.errors.demoUrl.message}</span>
+              )}
             </label>
             <label>
               Cover image URL
               <input type="url" {...form.register('coverImageUrl')} />
-              {form.formState.errors.coverImageUrl && <span>{form.formState.errors.coverImageUrl.message}</span>}
+              {form.formState.errors.coverImageUrl && (
+                <span>{form.formState.errors.coverImageUrl.message}</span>
+              )}
             </label>
             <label>
               Started at
               <input type="date" {...form.register('startedAt')} />
-              {form.formState.errors.startedAt && <span>{form.formState.errors.startedAt.message}</span>}
+              {form.formState.errors.startedAt && (
+                <span>{form.formState.errors.startedAt.message}</span>
+              )}
             </label>
             <label>
               Completed at
               <input type="date" {...form.register('completedAt')} />
-              {form.formState.errors.completedAt && <span>{form.formState.errors.completedAt.message}</span>}
+              {form.formState.errors.completedAt && (
+                <span>{form.formState.errors.completedAt.message}</span>
+              )}
             </label>
           </div>
 
@@ -351,7 +383,9 @@ export function ProjectFormPage() {
 
           {saveMutation.isSuccess && <p className="form-note">Project changes saved.</p>}
           {saveMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(saveMutation.error, 'Could not save project.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(saveMutation.error, 'Could not save project.')}
+            </p>
           )}
         </form>
       )}

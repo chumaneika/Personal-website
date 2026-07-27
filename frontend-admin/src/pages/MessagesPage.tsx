@@ -2,11 +2,15 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { KeyboardEvent, MouseEvent } from 'react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { deleteContactMessage, fetchContactMessages, updateContactMessageStatus } from '../shared/api/messages';
+import {
+  deleteContactMessage,
+  fetchContactMessages,
+  updateContactMessageStatus,
+} from '../shared/api/messages';
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { formatDateTime, formatStatus, previewText } from '../shared/lib/format';
-import { ContactMessageStatus, CONTACT_MESSAGE_STATUSES } from '../shared/types/api';
+import { type ContactMessageStatus, CONTACT_MESSAGE_STATUSES } from '../shared/types/api';
 
 type MessageFilter = ContactMessageStatus | 'ALL';
 
@@ -156,7 +160,9 @@ export function MessagesPage() {
                         <button
                           type="button"
                           disabled={statusMutation.isPending}
-                          onClick={() => statusMutation.mutate({ id: message.id, status: 'ARCHIVED' })}
+                          onClick={() =>
+                            statusMutation.mutate({ id: message.id, status: 'ARCHIVED' })
+                          }
                         >
                           Archive
                         </button>
@@ -180,13 +186,21 @@ export function MessagesPage() {
 
       {messagesQuery.data && messagesQuery.data.totalPages > 1 && (
         <div className="action-row">
-          <button type="button" disabled={messagesQuery.data.first} onClick={() => setPage((value) => value - 1)}>
+          <button
+            type="button"
+            disabled={messagesQuery.data.first}
+            onClick={() => setPage((value) => value - 1)}
+          >
             Previous
           </button>
           <span>
             Page {messagesQuery.data.page + 1} of {messagesQuery.data.totalPages}
           </span>
-          <button type="button" disabled={messagesQuery.data.last} onClick={() => setPage((value) => value + 1)}>
+          <button
+            type="button"
+            disabled={messagesQuery.data.last}
+            onClick={() => setPage((value) => value + 1)}
+          >
             Next
           </button>
         </div>

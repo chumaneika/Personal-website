@@ -1,4 +1,4 @@
-import { ArticleRequest, ArticleResponse, PublicationStatus } from '../types/api';
+import { type ArticleRequest, type ArticleResponse, type PublicationStatus } from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchArticles(status?: PublicationStatus) {
@@ -24,7 +24,9 @@ export async function updateArticle(id: number, payload: ArticleRequest) {
 }
 
 export async function updateArticleStatus(id: number, status: PublicationStatus) {
-  const response = await httpClient.patch<ArticleResponse>(`/admin/articles/${id}/status`, { status });
+  const response = await httpClient.patch<ArticleResponse>(`/admin/articles/${id}/status`, {
+    status,
+  });
   return response.data;
 }
 

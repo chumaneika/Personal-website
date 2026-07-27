@@ -1,4 +1,4 @@
-import { MetaEnumsResponse } from '../types/api';
+import { type MetaEnumsResponse } from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchMetaEnums() {

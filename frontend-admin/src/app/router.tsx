@@ -1,4 +1,4 @@
-import { lazy, ReactElement, Suspense } from 'react';
+import { lazy, type ReactElement, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AdminLayout } from './AdminLayout';
 import { LoginRoute, ProtectedRoute } from './RouteGuards';
@@ -9,28 +9,50 @@ const DashboardPage = lazy(() =>
 const ArticleFormPage = lazy(() =>
   import('../pages/ArticleFormPage').then(({ ArticleFormPage }) => ({ default: ArticleFormPage })),
 );
-const ArticlesPage = lazy(() => import('../pages/ArticlesPage').then(({ ArticlesPage }) => ({ default: ArticlesPage })));
-const LoginPage = lazy(() => import('../pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })));
-const MessageDetailPage = lazy(() =>
-  import('../pages/MessageDetailPage').then(({ MessageDetailPage }) => ({ default: MessageDetailPage })),
+const ArticlesPage = lazy(() =>
+  import('../pages/ArticlesPage').then(({ ArticlesPage }) => ({ default: ArticlesPage })),
 );
-const MessagesPage = lazy(() => import('../pages/MessagesPage').then(({ MessagesPage }) => ({ default: MessagesPage })));
-const NotFoundPage = lazy(() => import('../pages/NotFoundPage').then(({ NotFoundPage }) => ({ default: NotFoundPage })));
-const ProfilePage = lazy(() => import('../pages/ProfilePage').then(({ ProfilePage }) => ({ default: ProfilePage })));
+const LoginPage = lazy(() =>
+  import('../pages/LoginPage').then(({ LoginPage }) => ({ default: LoginPage })),
+);
+const MessageDetailPage = lazy(() =>
+  import('../pages/MessageDetailPage').then(({ MessageDetailPage }) => ({
+    default: MessageDetailPage,
+  })),
+);
+const MessagesPage = lazy(() =>
+  import('../pages/MessagesPage').then(({ MessagesPage }) => ({ default: MessagesPage })),
+);
+const NotFoundPage = lazy(() =>
+  import('../pages/NotFoundPage').then(({ NotFoundPage }) => ({ default: NotFoundPage })),
+);
+const ProfilePage = lazy(() =>
+  import('../pages/ProfilePage').then(({ ProfilePage }) => ({ default: ProfilePage })),
+);
 const ProjectFormPage = lazy(() =>
   import('../pages/ProjectFormPage').then(({ ProjectFormPage }) => ({ default: ProjectFormPage })),
 );
-const ProjectsPage = lazy(() => import('../pages/ProjectsPage').then(({ ProjectsPage }) => ({ default: ProjectsPage })));
-const SettingsPage = lazy(() => import('../pages/SettingsPage').then(({ SettingsPage }) => ({ default: SettingsPage })));
+const ProjectsPage = lazy(() =>
+  import('../pages/ProjectsPage').then(({ ProjectsPage }) => ({ default: ProjectsPage })),
+);
+const SettingsPage = lazy(() =>
+  import('../pages/SettingsPage').then(({ SettingsPage }) => ({ default: SettingsPage })),
+);
 const SkillFormPage = lazy(() =>
   import('../pages/SkillFormPage').then(({ SkillFormPage }) => ({ default: SkillFormPage })),
 );
-const SkillsPage = lazy(() => import('../pages/SkillsPage').then(({ SkillsPage }) => ({ default: SkillsPage })));
+const SkillsPage = lazy(() =>
+  import('../pages/SkillsPage').then(({ SkillsPage }) => ({ default: SkillsPage })),
+);
 const SkillCategoriesPage = lazy(() =>
-  import('../pages/SkillCategoriesPage').then(({ SkillCategoriesPage }) => ({ default: SkillCategoriesPage })),
+  import('../pages/SkillCategoriesPage').then(({ SkillCategoriesPage }) => ({
+    default: SkillCategoriesPage,
+  })),
 );
 const SkillCategoryFormPage = lazy(() =>
-  import('../pages/SkillCategoryFormPage').then(({ SkillCategoryFormPage }) => ({ default: SkillCategoryFormPage })),
+  import('../pages/SkillCategoryFormPage').then(({ SkillCategoryFormPage }) => ({
+    default: SkillCategoryFormPage,
+  })),
 );
 
 function lazyRoute(element: ReactElement) {

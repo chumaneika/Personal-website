@@ -14,13 +14,21 @@ import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { nullableText } from '../shared/lib/form';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
-import { ArticleRequest, ArticleResponse, PublicationStatus, PUBLICATION_STATUSES } from '../shared/types/api';
+import {
+  type ArticleRequest,
+  type ArticleResponse,
+  type PublicationStatus,
+  PUBLICATION_STATUSES,
+} from '../shared/types/api';
 
 const slugRegex = /^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$/;
 const optionalUrl = z
   .string()
   .max(512, 'Use 512 characters or fewer.')
-  .refine((value) => value.length === 0 || z.string().url().safeParse(value).success, 'Enter a valid URL.');
+  .refine(
+    (value) => value.length === 0 || z.string().url().safeParse(value).success,
+    'Enter a valid URL.',
+  );
 
 const articleSchema = z.object({
   title: z.string().trim().min(1, 'Title is required.').max(200, 'Use 200 characters or fewer.'),
@@ -31,7 +39,11 @@ const articleSchema = z.object({
     .max(180, 'Use 180 characters or fewer.')
     .regex(slugRegex, 'Use letters, numbers, and single hyphens between words.'),
   summary: z.string().max(1000, 'Use 1000 characters or fewer.'),
-  content: z.string().trim().min(1, 'Content is required.').max(100000, 'Use 100000 characters or fewer.'),
+  content: z
+    .string()
+    .trim()
+    .min(1, 'Content is required.')
+    .max(100000, 'Use 100000 characters or fewer.'),
   coverImageUrl: optionalUrl,
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
 });
@@ -128,7 +140,9 @@ export function ArticleFormPage() {
     if (
       values.status === 'PUBLISHED' &&
       shouldConfirmPublish(values) &&
-      !window.confirm('This article has no summary for the public list. Save it as published anyway?')
+      !window.confirm(
+        'This article has no summary for the public list. Save it as published anyway?',
+      )
     ) {
       return;
     }
@@ -206,7 +220,9 @@ export function ArticleFormPage() {
             ))}
           </div>
           {statusMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(statusMutation.error, 'Could not update status.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(statusMutation.error, 'Could not update status.')}
+            </p>
           )}
         </section>
       )}
@@ -237,8 +253,14 @@ export function ArticleFormPage() {
             </label>
             <label>
               Cover image URL (optional)
-              <input type="url" placeholder="https://example.com/cover.jpg" {...form.register('coverImageUrl')} />
-              {form.formState.errors.coverImageUrl && <span>{form.formState.errors.coverImageUrl.message}</span>}
+              <input
+                type="url"
+                placeholder="https://example.com/cover.jpg"
+                {...form.register('coverImageUrl')}
+              />
+              {form.formState.errors.coverImageUrl && (
+                <span>{form.formState.errors.coverImageUrl.message}</span>
+              )}
             </label>
           </div>
 
@@ -262,7 +284,9 @@ export function ArticleFormPage() {
 
           {saveMutation.isSuccess && <p className="form-note">Article saved.</p>}
           {saveMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(saveMutation.error, 'Could not save article.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(saveMutation.error, 'Could not save article.')}
+            </p>
           )}
         </form>
       )}

@@ -24,7 +24,8 @@ export function SkillsPage() {
   });
 
   const visibilityMutation = useMutation({
-    mutationFn: ({ id, visible }: { id: number; visible: boolean }) => updateSkillVisibility(id, visible),
+    mutationFn: ({ id, visible }: { id: number; visible: boolean }) =>
+      updateSkillVisibility(id, visible),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['skills'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
@@ -155,7 +156,11 @@ export function SkillsPage() {
                   <td>{formatStatus(skill.level)}</td>
                   <td>{skill.sortOrder}</td>
                   <td>
-                    <span className={skill.visible ? 'status-chip status-chip--published' : 'status-chip'}>
+                    <span
+                      className={
+                        skill.visible ? 'status-chip status-chip--published' : 'status-chip'
+                      }
+                    >
                       {skill.visible ? 'Visible' : 'Hidden'}
                     </span>
                   </td>
@@ -166,7 +171,9 @@ export function SkillsPage() {
                       <button
                         type="button"
                         disabled={visibilityMutation.isPending}
-                        onClick={() => visibilityMutation.mutate({ id: skill.id, visible: !skill.visible })}
+                        onClick={() =>
+                          visibilityMutation.mutate({ id: skill.id, visible: !skill.visible })
+                        }
                       >
                         {skill.visible ? 'Hide' : 'Show'}
                       </button>

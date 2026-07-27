@@ -16,14 +16,20 @@ export function ContactPage() {
       <div className="page-intro">
         <p className="eyebrow">Contact</p>
         <h1>Tell me about the project</h1>
-        <p>Share a few details about the work, timeline, or backend challenge you want to discuss.</p>
+        <p>
+          Share a few details about the work, timeline, or backend challenge you want to discuss.
+        </p>
 
         {profileQuery.isLoading && (
           <PageState compact title="Loading contacts" message="Public contact links are loading." />
         )}
 
         {profileQuery.isError && (
-          <PageState compact title="Contact links unavailable" message="The form is still available below." />
+          <PageState
+            compact
+            title="Contact links unavailable"
+            message="The form is still available below."
+          />
         )}
 
         {profileQuery.data && (

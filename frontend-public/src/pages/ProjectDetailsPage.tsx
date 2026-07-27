@@ -39,7 +39,11 @@ export function ProjectDetailsPage() {
       <PageState
         eyebrow={notFound ? '404' : 'Project'}
         title={notFound ? 'Project not found' : 'Project is unavailable'}
-        message={notFound ? 'This project is not published or does not exist.' : 'The project could not be loaded right now.'}
+        message={
+          notFound
+            ? 'This project is not published or does not exist.'
+            : 'The project could not be loaded right now.'
+        }
         action={
           <Link className="button button--secondary" to="/projects">
             Projects

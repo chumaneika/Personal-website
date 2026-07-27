@@ -6,7 +6,8 @@ import { getApiErrorMessage } from '../shared/lib/errors';
 
 export function SkillCategoriesPage() {
   const location = useLocation();
-  const savedCategoryName = (location.state as { savedCategoryName?: string } | null)?.savedCategoryName;
+  const savedCategoryName = (location.state as { savedCategoryName?: string } | null)
+    ?.savedCategoryName;
   const categoriesQuery = useQuery({
     queryKey: ['skill-categories'],
     queryFn: fetchSkillCategories,
@@ -21,7 +22,11 @@ export function SkillCategoriesPage() {
   });
 
   function handleDelete(id: number, name: string) {
-    if (window.confirm(`Delete the "${name}" category permanently? Categories used by skills cannot be deleted.`)) {
+    if (
+      window.confirm(
+        `Delete the "${name}" category permanently? Categories used by skills cannot be deleted.`,
+      )
+    ) {
       deleteMutation.mutate(id);
     }
   }
@@ -42,7 +47,7 @@ export function SkillCategoriesPage() {
 
       {savedCategoryName && (
         <p className="surface-state surface-state--success">
-          Category "{savedCategoryName}" saved. All categories are shown below.
+          Category “{savedCategoryName}” saved. All categories are shown below.
         </p>
       )}
 

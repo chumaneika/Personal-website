@@ -1,10 +1,17 @@
-import { ContactMessageResponse, ContactMessageStatus, PageResponse } from '../types/api';
+import {
+  type ContactMessageResponse,
+  type ContactMessageStatus,
+  type PageResponse,
+} from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchContactMessages(status?: ContactMessageStatus, page = 0, size = 20) {
-  const response = await httpClient.get<PageResponse<ContactMessageResponse>>('/admin/contact-messages', {
-    params: { status, page, size },
-  });
+  const response = await httpClient.get<PageResponse<ContactMessageResponse>>(
+    '/admin/contact-messages',
+    {
+      params: { status, page, size },
+    },
+  );
 
   return response.data;
 }
@@ -19,9 +26,12 @@ export async function fetchContactMessage(id: number) {
 }
 
 export async function updateContactMessageStatus(id: number, status: ContactMessageStatus) {
-  const response = await httpClient.patch<ContactMessageResponse>(`/admin/contact-messages/${id}/status`, {
-    status,
-  });
+  const response = await httpClient.patch<ContactMessageResponse>(
+    `/admin/contact-messages/${id}/status`,
+    {
+      status,
+    },
+  );
 
   return response.data;
 }

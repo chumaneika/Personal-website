@@ -1,4 +1,4 @@
-import { SkillRequest, SkillResponse } from '../types/api';
+import { type SkillRequest, type SkillResponse } from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchSkills() {
@@ -22,7 +22,9 @@ export async function updateSkill(id: number, payload: SkillRequest) {
 }
 
 export async function updateSkillVisibility(id: number, visible: boolean) {
-  const response = await httpClient.patch<SkillResponse>(`/admin/skills/${id}/visibility`, { visible });
+  const response = await httpClient.patch<SkillResponse>(`/admin/skills/${id}/visibility`, {
+    visible,
+  });
   return response.data;
 }
 

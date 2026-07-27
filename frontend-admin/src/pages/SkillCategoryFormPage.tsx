@@ -11,7 +11,7 @@ import {
 } from '../shared/api/skillCategories';
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
-import { SkillCategoryRequest } from '../shared/types/api';
+import { type SkillCategoryRequest } from '../shared/types/api';
 
 const skillCategorySchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(120, 'Use 120 characters or fewer.'),
@@ -48,7 +48,9 @@ export function SkillCategoryFormPage() {
   const saveMutation = useMutation({
     mutationFn: (values: SkillCategoryFormValues) => {
       const payload: SkillCategoryRequest = { name: values.name.trim() };
-      return isEditing ? updateSkillCategory(categoryId as number, payload) : createSkillCategory(payload);
+      return isEditing
+        ? updateSkillCategory(categoryId as number, payload)
+        : createSkillCategory(payload);
     },
     onSuccess: (category) => {
       queryClient.invalidateQueries({ queryKey: ['skill-categories'] });
@@ -97,7 +99,9 @@ export function SkillCategoryFormPage() {
         </Link>
       </div>
 
-      {isEditing && categoryQuery.isPending && <p className="surface-state">Loading skill category...</p>}
+      {isEditing && categoryQuery.isPending && (
+        <p className="surface-state">Loading skill category...</p>
+      )}
 
       {categoryQuery.isError && (
         <p className="surface-state surface-state--error">
@@ -106,17 +110,15 @@ export function SkillCategoryFormPage() {
       )}
 
       {canRenderForm && (
-        <form
-          className="stacked-form"
-          noValidate
-          onSubmit={onSubmit}
-        >
+        <form className="stacked-form" noValidate onSubmit={onSubmit}>
           <label>
             Name
             <input
               type="text"
               aria-invalid={Boolean(form.formState.errors.name)}
-              aria-describedby={form.formState.errors.name ? 'skill-category-name-error' : undefined}
+              aria-describedby={
+                form.formState.errors.name ? 'skill-category-name-error' : undefined
+              }
               {...form.register('name')}
             />
             {form.formState.errors.name && (
@@ -133,7 +135,9 @@ export function SkillCategoryFormPage() {
           </div>
 
           {saveMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(saveMutation.error, 'Could not save skill category.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(saveMutation.error, 'Could not save skill category.')}
+            </p>
           )}
         </form>
       )}

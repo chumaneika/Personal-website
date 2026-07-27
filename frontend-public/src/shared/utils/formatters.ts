@@ -6,7 +6,9 @@ export const skillLevelLabels = {
   ADVANCED: 'Advanced',
 } as const;
 
-export function getProfileName(profile: Pick<ProfileResponse, 'firstName' | 'lastName'> | null | undefined) {
+export function getProfileName(
+  profile: Pick<ProfileResponse, 'firstName' | 'lastName'> | null | undefined,
+) {
   if (!profile) {
     return 'Malik Alikberov';
   }
@@ -14,7 +16,9 @@ export function getProfileName(profile: Pick<ProfileResponse, 'firstName' | 'las
   return [profile.firstName, profile.lastName].filter(Boolean).join(' ') || 'Malik Alikberov';
 }
 
-export function getInitials(profile: Pick<ProfileResponse, 'firstName' | 'lastName'> | null | undefined) {
+export function getInitials(
+  profile: Pick<ProfileResponse, 'firstName' | 'lastName'> | null | undefined,
+) {
   const name = getProfileName(profile);
   return name
     .split(' ')
@@ -30,7 +34,11 @@ export function splitTechnologyStack(technologyStack: string | null | undefined)
     return [];
   }
 
-  if (!technologyStack.includes(',') && !technologyStack.includes(';') && !technologyStack.includes('\n')) {
+  if (
+    !technologyStack.includes(',') &&
+    !technologyStack.includes(';') &&
+    !technologyStack.includes('\n')
+  ) {
     return [technologyStack.trim()];
   }
 
@@ -80,10 +88,10 @@ export function groupSkillsByCategory(skills: SkillResponse[]) {
     }
 
     const categoryId = skill.category.id;
-    groups[categoryId] = [
-      ...(groups[categoryId] ?? []),
-      skill,
-    ].sort((first, second) => first.sortOrder - second.sortOrder || first.name.localeCompare(second.name));
+    groups[categoryId] = [...(groups[categoryId] ?? []), skill].sort(
+      (first, second) =>
+        first.sortOrder - second.sortOrder || first.name.localeCompare(second.name),
+    );
 
     return groups;
   }, {});
@@ -98,10 +106,12 @@ export function normalizeSkillCategories(
   }
 
   const uniqueCategories = Array.from(
-    skills.reduce<Map<number, SkillCategoryResponse>>((uniqueCategories, skill) => {
-      uniqueCategories.set(skill.category.id, skill.category);
-      return uniqueCategories;
-    }, new Map()).values(),
+    skills
+      .reduce<Map<number, SkillCategoryResponse>>((uniqueCategories, skill) => {
+        uniqueCategories.set(skill.category.id, skill.category);
+        return uniqueCategories;
+      }, new Map())
+      .values(),
   );
 
   return uniqueCategories.sort((first, second) => first.name.localeCompare(second.name));

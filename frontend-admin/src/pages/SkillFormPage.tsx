@@ -11,9 +11,9 @@ import { getApiErrorMessage } from '../shared/lib/errors';
 import { optionalNumber } from '../shared/lib/form';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
 import {
-  SkillLevel,
-  SkillRequest,
-  SkillResponse,
+  type SkillLevel,
+  type SkillRequest,
+  type SkillResponse,
   SKILL_LEVELS,
 } from '../shared/types/api';
 
@@ -21,7 +21,10 @@ const skillSchema = z.object({
   name: z.string().trim().min(1, 'Name is required.').max(120, 'Use 120 characters or fewer.'),
   categoryId: z.coerce.number().int('Select a category.').positive('Select a category.'),
   level: z.enum(['BASIC', 'INTERMEDIATE', 'ADVANCED']),
-  sortOrder: z.coerce.number().int('Use a whole number.').min(0, 'Sort order must be 0 or greater.'),
+  sortOrder: z.coerce
+    .number()
+    .int('Use a whole number.')
+    .min(0, 'Sort order must be 0 or greater.'),
   visible: z.boolean(),
 });
 
@@ -173,7 +176,9 @@ export function SkillFormPage() {
                   </option>
                 ))}
               </select>
-              {form.formState.errors.categoryId && <span>{form.formState.errors.categoryId.message}</span>}
+              {form.formState.errors.categoryId && (
+                <span>{form.formState.errors.categoryId.message}</span>
+              )}
             </label>
             <label>
               Level
@@ -188,8 +193,15 @@ export function SkillFormPage() {
             </label>
             <label>
               Sort order
-              <input type="number" min="0" step="1" {...form.register('sortOrder', { valueAsNumber: true })} />
-              {form.formState.errors.sortOrder && <span>{form.formState.errors.sortOrder.message}</span>}
+              <input
+                type="number"
+                min="0"
+                step="1"
+                {...form.register('sortOrder', { valueAsNumber: true })}
+              />
+              {form.formState.errors.sortOrder && (
+                <span>{form.formState.errors.sortOrder.message}</span>
+              )}
             </label>
           </div>
 
@@ -199,7 +211,9 @@ export function SkillFormPage() {
           </label>
 
           {metaQuery.isError && (
-            <p className="muted-text">Skill categories could not be loaded from /admin/meta/enums.</p>
+            <p className="muted-text">
+              Skill categories could not be loaded from /admin/meta/enums.
+            </p>
           )}
 
           <div className="form-actions">
@@ -210,7 +224,9 @@ export function SkillFormPage() {
 
           {saveMutation.isSuccess && <p className="form-note">Skill saved.</p>}
           {saveMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(saveMutation.error, 'Could not save skill.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(saveMutation.error, 'Could not save skill.')}
+            </p>
           )}
         </form>
       )}

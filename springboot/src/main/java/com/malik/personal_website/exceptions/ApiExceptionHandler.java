@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.time.Instant;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,6 +19,36 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
+            InvalidCredentialsException exception,
+            HttpServletRequest request
+    ) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(LoginRateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleLoginRateLimit(
+            LoginRateLimitException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(exception.getRetryAfterSeconds()))
+                .body(errorResponse(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage(), request));
+    }
+
+    @ExceptionHandler(ContactSubmissionRateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleContactSubmissionRateLimit(
+            ContactSubmissionRateLimitException exception,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(exception.getRetryAfterSeconds()))
+                .body(errorResponse(HttpStatus.TOO_MANY_REQUESTS, exception.getMessage(), request));
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(
@@ -104,13 +135,17 @@ public class ApiExceptionHandler {
     ) {
         return ResponseEntity
                 .status(status)
-                .body(new ErrorResponse(
-                        Instant.now(),
-                        status.value(),
-                        status.getReasonPhrase(),
-                        message,
-                        request.getRequestURI()
-                ));
+                .body(errorResponse(status, message, request));
+    }
+
+    private ErrorResponse errorResponse(HttpStatus status, String message, HttpServletRequest request) {
+        return new ErrorResponse(
+                Instant.now(),
+                status.value(),
+                status.getReasonPhrase(),
+                message,
+                request.getRequestURI()
+        );
     }
 
     private String formatFieldError(FieldError error) {

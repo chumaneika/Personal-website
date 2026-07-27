@@ -42,7 +42,11 @@ export function ProjectsPage() {
       {projects.length > 0 ? (
         <ProjectGrid projects={projects} />
       ) : (
-        <PageState compact title="No published projects yet" message="Published projects will appear here." />
+        <PageState
+          compact
+          title="No published projects yet"
+          message="Published projects will appear here."
+        />
       )}
     </section>
   );

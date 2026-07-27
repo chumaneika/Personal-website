@@ -1,26 +1,10 @@
-import { AdminMeResponse } from '../types/api';
-import { httpClient } from './httpClient';
-import { clearStoredAuthHeader, storeAuthHeader } from './session';
+import { type AdminMeResponse } from '../types/api';
+import { httpClient, resetCsrfToken } from './httpClient';
 
 type SignInCredentials = {
   email: string;
   password: string;
 };
-
-function toBase64(value: string) {
-  const bytes = new TextEncoder().encode(value);
-  let binaryValue = '';
-
-  bytes.forEach((byte) => {
-    binaryValue += String.fromCharCode(byte);
-  });
-
-  return window.btoa(binaryValue);
-}
-
-export function createBasicAuthHeader({ email, password }: SignInCredentials) {
-  return `Basic ${toBase64(`${email}:${password}`)}`;
-}
 
 function isAdminMeResponse(value: unknown): value is AdminMeResponse {
   return (
@@ -34,19 +18,11 @@ function isAdminMeResponse(value: unknown): value is AdminMeResponse {
 }
 
 export async function signIn(values: SignInCredentials) {
-  const authHeader = createBasicAuthHeader(values);
-
-  const response = await httpClient.get<unknown>('/admin/me', {
-    headers: {
-      Authorization: authHeader,
-    },
-  });
+  const response = await httpClient.post<unknown>('/auth/login', values);
 
   if (!isAdminMeResponse(response.data)) {
     throw new Error('Admin session validation returned an unexpected response.');
   }
-
-  storeAuthHeader(authHeader);
 
   return response.data;
 }
@@ -61,6 +37,15 @@ export async function fetchCurrentAdmin() {
   return response.data;
 }
 
-export function clearAuthSession() {
-  clearStoredAuthHeader();
+export async function signOut() {
+  await httpClient.post('/auth/logout');
+  resetCsrfToken();
+}
+
+export async function changePassword(currentPassword: string, newPassword: string) {
+  await httpClient.post('/admin/account/password', {
+    currentPassword,
+    newPassword,
+  });
+  resetCsrfToken();
 }

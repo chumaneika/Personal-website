@@ -8,24 +8,42 @@ import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { nullableText } from '../shared/lib/form';
 import { formatDateTime } from '../shared/lib/format';
-import { ProfileRequest, ProfileResponse } from '../shared/types/api';
+import { type ProfileRequest, type ProfileResponse } from '../shared/types/api';
 
 const optionalUrl = z
   .string()
   .max(512, 'Use 512 characters or fewer.')
-  .refine((value) => value.length === 0 || z.string().url().safeParse(value).success, 'Enter a valid URL.');
+  .refine(
+    (value) => value.length === 0 || z.string().url().safeParse(value).success,
+    'Enter a valid URL.',
+  );
 
 const profileSchema = z.object({
-  firstName: z.string().trim().min(1, 'First name is required.').max(100, 'Use 100 characters or fewer.'),
-  lastName: z.string().trim().min(1, 'Last name is required.').max(100, 'Use 100 characters or fewer.'),
-  headline: z.string().trim().min(1, 'Headline is required.').max(160, 'Use 160 characters or fewer.'),
+  firstName: z
+    .string()
+    .trim()
+    .min(1, 'First name is required.')
+    .max(100, 'Use 100 characters or fewer.'),
+  lastName: z
+    .string()
+    .trim()
+    .min(1, 'Last name is required.')
+    .max(100, 'Use 100 characters or fewer.'),
+  headline: z
+    .string()
+    .trim()
+    .min(1, 'Headline is required.')
+    .max(160, 'Use 160 characters or fewer.'),
   shortBio: z.string().max(1000, 'Use 1000 characters or fewer.'),
   fullBio: z.string().max(8000, 'Use 8000 characters or fewer.'),
   location: z.string().max(160, 'Use 160 characters or fewer.'),
   email: z
     .string()
     .max(254, 'Use 254 characters or fewer.')
-    .refine((value) => value.length === 0 || z.string().email().safeParse(value).success, 'Enter a valid email.'),
+    .refine(
+      (value) => value.length === 0 || z.string().email().safeParse(value).success,
+      'Enter a valid email.',
+    ),
   telegramUrl: optionalUrl,
   githubUrl: optionalUrl,
   linkedinUrl: optionalUrl,
@@ -133,7 +151,9 @@ export function ProfilePage() {
       )}
 
       {profileQuery.isSuccess && profileQuery.data === null && (
-        <p className="surface-state">No profile exists yet. Fill the form and save it with the profile API.</p>
+        <p className="surface-state">
+          No profile exists yet. Fill the form and save it with the profile API.
+        </p>
       )}
 
       {profileQuery.isSuccess && (
@@ -142,25 +162,33 @@ export function ProfilePage() {
             <label>
               First name
               <input type="text" {...form.register('firstName')} />
-              {form.formState.errors.firstName && <span>{form.formState.errors.firstName.message}</span>}
+              {form.formState.errors.firstName && (
+                <span>{form.formState.errors.firstName.message}</span>
+              )}
             </label>
             <label>
               Last name
               <input type="text" {...form.register('lastName')} />
-              {form.formState.errors.lastName && <span>{form.formState.errors.lastName.message}</span>}
+              {form.formState.errors.lastName && (
+                <span>{form.formState.errors.lastName.message}</span>
+              )}
             </label>
           </div>
 
           <label>
             Headline
             <input type="text" {...form.register('headline')} />
-            {form.formState.errors.headline && <span>{form.formState.errors.headline.message}</span>}
+            {form.formState.errors.headline && (
+              <span>{form.formState.errors.headline.message}</span>
+            )}
           </label>
 
           <label>
             Short bio
             <textarea rows={3} {...form.register('shortBio')} />
-            {form.formState.errors.shortBio && <span>{form.formState.errors.shortBio.message}</span>}
+            {form.formState.errors.shortBio && (
+              <span>{form.formState.errors.shortBio.message}</span>
+            )}
           </label>
 
           <label>
@@ -173,7 +201,9 @@ export function ProfilePage() {
             <label>
               Location
               <input type="text" {...form.register('location')} />
-              {form.formState.errors.location && <span>{form.formState.errors.location.message}</span>}
+              {form.formState.errors.location && (
+                <span>{form.formState.errors.location.message}</span>
+              )}
             </label>
             <label>
               Email
@@ -186,33 +216,44 @@ export function ProfilePage() {
             <label>
               Telegram URL
               <input type="url" {...form.register('telegramUrl')} />
-              {form.formState.errors.telegramUrl && <span>{form.formState.errors.telegramUrl.message}</span>}
+              {form.formState.errors.telegramUrl && (
+                <span>{form.formState.errors.telegramUrl.message}</span>
+              )}
             </label>
             <label>
               GitHub URL
               <input type="url" {...form.register('githubUrl')} />
-              {form.formState.errors.githubUrl && <span>{form.formState.errors.githubUrl.message}</span>}
+              {form.formState.errors.githubUrl && (
+                <span>{form.formState.errors.githubUrl.message}</span>
+              )}
             </label>
             <label>
               LinkedIn URL
               <input type="url" {...form.register('linkedinUrl')} />
-              {form.formState.errors.linkedinUrl && <span>{form.formState.errors.linkedinUrl.message}</span>}
+              {form.formState.errors.linkedinUrl && (
+                <span>{form.formState.errors.linkedinUrl.message}</span>
+              )}
             </label>
             <label>
               Avatar URL
               <input type="url" {...form.register('avatarUrl')} />
-              {form.formState.errors.avatarUrl && <span>{form.formState.errors.avatarUrl.message}</span>}
+              {form.formState.errors.avatarUrl && (
+                <span>{form.formState.errors.avatarUrl.message}</span>
+              )}
             </label>
             <label>
               Resume URL
               <input type="url" {...form.register('resumeUrl')} />
-              {form.formState.errors.resumeUrl && <span>{form.formState.errors.resumeUrl.message}</span>}
+              {form.formState.errors.resumeUrl && (
+                <span>{form.formState.errors.resumeUrl.message}</span>
+              )}
             </label>
           </div>
 
           {profileQuery.data && (
             <p className="muted-text">
-              Updated {formatDateTime(profileQuery.data.updatedAt)}. Created {formatDateTime(profileQuery.data.createdAt)}.
+              Updated {formatDateTime(profileQuery.data.updatedAt)}. Created{' '}
+              {formatDateTime(profileQuery.data.createdAt)}.
             </p>
           )}
 
@@ -224,7 +265,9 @@ export function ProfilePage() {
 
           {saveMutation.isSuccess && <p className="form-note">Profile saved.</p>}
           {saveMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(saveMutation.error, 'Could not save profile.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(saveMutation.error, 'Could not save profile.')}
+            </p>
           )}
         </form>
       )}

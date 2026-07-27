@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { ProfileRequest, ProfileResponse } from '../types/api';
+import { type ProfileRequest, type ProfileResponse } from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchProfile() {

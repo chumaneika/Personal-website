@@ -5,7 +5,11 @@ import { deleteArticle, fetchArticles, updateArticleStatus } from '../shared/api
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { formatDateTime, formatStatus, previewText } from '../shared/lib/format';
-import { ArticleResponse, PublicationStatus, PUBLICATION_STATUSES } from '../shared/types/api';
+import {
+  type ArticleResponse,
+  type PublicationStatus,
+  PUBLICATION_STATUSES,
+} from '../shared/types/api';
 
 type ArticleFilter = PublicationStatus | 'ALL';
 
@@ -21,7 +25,8 @@ export function ArticlesPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: number; status: PublicationStatus }) => updateArticleStatus(id, status),
+    mutationFn: ({ id, status }: { id: number; status: PublicationStatus }) =>
+      updateArticleStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['articles'] });
       queryClient.invalidateQueries({ queryKey: ['admin-dashboard'] });
@@ -71,7 +76,10 @@ export function ArticlesPage() {
       <div className="toolbar">
         <label>
           Status
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as ArticleFilter)}>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as ArticleFilter)}
+          >
             <option value="ALL">All statuses</option>
             {PUBLICATION_STATUSES.map((status) => (
               <option key={status} value={status}>

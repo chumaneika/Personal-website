@@ -4,7 +4,7 @@ import { fetchContactMessage, updateContactMessageStatus } from '../shared/api/m
 import { queryClient } from '../shared/api/queryClient';
 import { getApiErrorMessage } from '../shared/lib/errors';
 import { formatDateTime, formatStatus } from '../shared/lib/format';
-import { ContactMessageStatus } from '../shared/types/api';
+import { type ContactMessageStatus } from '../shared/types/api';
 
 export function MessageDetailPage() {
   const { id } = useParams();
@@ -18,7 +18,8 @@ export function MessageDetailPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: (status: ContactMessageStatus) => updateContactMessageStatus(messageId as number, status),
+    mutationFn: (status: ContactMessageStatus) =>
+      updateContactMessageStatus(messageId as number, status),
     onSuccess: (message) => {
       queryClient.setQueryData(['contact-message', message.id], message);
       queryClient.invalidateQueries({ queryKey: ['contact-messages'] });
@@ -80,7 +81,11 @@ export function MessageDetailPage() {
 
           <div className="quick-actions">
             {message.status !== 'READ' && (
-              <button type="button" disabled={statusMutation.isPending} onClick={() => statusMutation.mutate('READ')}>
+              <button
+                type="button"
+                disabled={statusMutation.isPending}
+                onClick={() => statusMutation.mutate('READ')}
+              >
                 Mark as read
               </button>
             )}
@@ -96,7 +101,9 @@ export function MessageDetailPage() {
           </div>
 
           {statusMutation.isError && (
-            <p className="form-error">{getApiErrorMessage(statusMutation.error, 'Could not update message status.')}</p>
+            <p className="form-error">
+              {getApiErrorMessage(statusMutation.error, 'Could not update message status.')}
+            </p>
           )}
         </article>
       )}

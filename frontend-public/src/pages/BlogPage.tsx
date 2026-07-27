@@ -30,13 +30,19 @@ export function BlogPage() {
       <header className="page-intro">
         <p className="eyebrow">Blog</p>
         <h1>Engineering notes and articles</h1>
-        <p>Notes about Java, Spring Boot, backend architecture, APIs, and production engineering.</p>
+        <p>
+          Notes about Java, Spring Boot, backend architecture, APIs, and production engineering.
+        </p>
       </header>
 
       {articles.length > 0 ? (
         <ArticleGrid articles={articles} />
       ) : (
-        <PageState compact title="No published articles yet" message="Published articles will appear here." />
+        <PageState
+          compact
+          title="No published articles yet"
+          message="Published articles will appear here."
+        />
       )}
     </section>
   );

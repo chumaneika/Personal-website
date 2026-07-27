@@ -1,4 +1,4 @@
-import { SkillCategoryRequest, SkillCategoryResponse } from '../types/api';
+import { type SkillCategoryRequest, type SkillCategoryResponse } from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchSkillCategories() {
@@ -17,7 +17,10 @@ export async function createSkillCategory(payload: SkillCategoryRequest) {
 }
 
 export async function updateSkillCategory(id: number, payload: SkillCategoryRequest) {
-  const response = await httpClient.put<SkillCategoryResponse>(`/admin/skill-categories/${id}`, payload);
+  const response = await httpClient.put<SkillCategoryResponse>(
+    `/admin/skill-categories/${id}`,
+    payload,
+  );
   return response.data;
 }
 

@@ -10,8 +10,32 @@
   "scripts": {
     "dev:public": "npm run dev --workspace @personal-website/frontend-public",
     "dev:admin": "npm run dev --workspace @personal-website/frontend-admin",
+    "typecheck": "npm run typecheck --workspaces",
+    "lint": "npm run lint --workspaces",
+    "lint:fix": "npm run lint:fix --workspaces",
+    "format": "prettier --write \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
+    "format:check": "prettier --check \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "npm run build --workspaces",
+    "quality": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build",
     "preview:public": "npm run preview --workspace @personal-website/frontend-public",
     "preview:admin": "npm run preview --workspace @personal-website/frontend-admin"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "eslint": "^9.39.5",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.8.0",
+    "jsdom": "^29.1.1",
+    "prettier": "3.9.6",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10"
   }
 }

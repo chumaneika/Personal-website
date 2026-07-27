@@ -27,9 +27,9 @@ microfrontends.
 
 ## Backend Contract
 
-The backend is a Spring Boot REST API. Admin endpoints are protected with HTTP
-Basic Auth. The frontend must not implement token-login flows that the backend
-does not expose.
+The backend is a Spring Boot REST API. Admin endpoints are protected with a
+server-side HTTP session. The browser receives an HttpOnly session cookie and
+must never persist credentials or authentication headers.
 
 The API root is:
 
@@ -46,15 +46,18 @@ Admin paths are called beneath the API root, for example `/admin/me` and
 Login flow:
 
 1. The admin enters email and password on `/login`.
-2. The frontend creates `Basic base64(email + ':' + password)`.
-3. The frontend validates credentials with `GET /admin/me`.
-4. Only a successful `{ email, role }` response stores the Basic header in
-   `sessionStorage`.
-5. The raw password must not be stored.
-6. Logout clears `sessionStorage` and the TanStack Query cache.
-7. A `401` response clears the session and redirects to `/login`.
-8. Production must use HTTPS because Basic credentials are not encrypted by
-   base64.
+2. Before an unsafe request, the frontend obtains a CSRF token from
+   `GET /auth/csrf`.
+3. The frontend sends credentials once to `POST /auth/login`.
+4. The backend creates a server-side session and returns an HttpOnly cookie.
+5. Axios sends cookies with `withCredentials`; no password, Basic header, or
+   token is stored in browser storage.
+6. Protected routes validate the session with `GET /admin/me`.
+7. Logout uses CSRF-protected `POST /auth/logout`, then clears the TanStack
+   Query cache.
+8. A `401` response redirects to `/login`.
+9. Production uses HTTPS, a Secure SameSite session cookie, HSTS, and forwarded
+   HTTPS headers from the reverse proxy.
 
 ## Admin API Modules
 
@@ -111,8 +114,9 @@ Implemented admin domains:
 - Contact message viewing and status management
 - Technical settings/session page
 
-Do not add image upload, admin user management, password change, or registration
-until the backend exposes those endpoints.
+Do not add image upload, admin user management, or registration until the
+backend exposes those endpoints. Password change is available through
+`POST /admin/account/password`.
 
 ## UI
 

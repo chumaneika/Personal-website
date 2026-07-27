@@ -14,6 +14,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.csrf.InvalidCsrfTokenException;
+import org.springframework.security.web.csrf.MissingCsrfTokenException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -37,7 +39,11 @@ public class ApiSecurityErrorHandler implements AuthenticationEntryPoint, Access
             HttpServletResponse response,
             AccessDeniedException exception
     ) throws IOException, ServletException {
-        writeError(request, response, HttpStatus.FORBIDDEN, "Access is denied");
+        String message = exception instanceof InvalidCsrfTokenException
+                || exception instanceof MissingCsrfTokenException
+                ? "Invalid or missing CSRF token"
+                : "Access is denied";
+        writeError(request, response, HttpStatus.FORBIDDEN, message);
     }
 
     private void writeError(

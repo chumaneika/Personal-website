@@ -45,7 +45,9 @@ export function HomePage() {
         <div className="hero-section__copy">
           <p className="eyebrow">Java Backend Developer</p>
           <h1>{getProfileName(profile)}</h1>
-          <p className="headline">{profile?.headline ?? 'Backend systems, APIs, and production-minded engineering.'}</p>
+          <p className="headline">
+            {profile?.headline ?? 'Backend systems, APIs, and production-minded engineering.'}
+          </p>
           <p className="lead">
             {profile?.shortBio ??
               'Portfolio profile is being prepared. Published projects and contact links will appear here as soon as they are available.'}
@@ -109,7 +111,11 @@ export function HomePage() {
         {visibleSkills.length > 0 ? (
           <SkillGroups skills={visibleSkills} categories={skillCategories} />
         ) : (
-          <PageState compact title="Skills are being updated" message="The public skill list is not available yet." />
+          <PageState
+            compact
+            title="Skills are being updated"
+            message="The public skill list is not available yet."
+          />
         )}
       </section>
 
@@ -126,13 +132,21 @@ export function HomePage() {
 
         {articlesQuery.isLoading && <LoadingState label="Loading articles..." />}
         {articlesQuery.isError && (
-          <PageState compact title="Articles are unavailable" message="Published articles could not be loaded right now." />
+          <PageState
+            compact
+            title="Articles are unavailable"
+            message="Published articles could not be loaded right now."
+          />
         )}
         {articlesQuery.isSuccess && articlesQuery.data.length > 0 && (
           <ArticleGrid articles={articlesQuery.data.slice(0, 3)} />
         )}
         {articlesQuery.isSuccess && articlesQuery.data.length === 0 && (
-          <PageState compact title="Articles are coming soon" message="Published articles will appear here." />
+          <PageState
+            compact
+            title="Articles are coming soon"
+            message="Published articles will appear here."
+          />
         )}
       </section>
     </>

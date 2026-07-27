@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Size;
 public record ContactMessageRequest(
         @NotBlank @Size(max = 120) String senderName,
         @NotBlank @Email @Size(max = 254) String senderEmail,
-        @NotBlank @Size(max = 5000) String message
+        @NotBlank @Size(max = 5000) String message,
+        @Size(max = 200) String website
 ) {
 }

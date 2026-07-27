@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { sendContactMessage } from '../../shared/api/contact';
-import { ContactFormValues, contactSchema } from './contactSchema';
+import { type ContactFormValues, contactSchema } from './contactSchema';
 
 export function ContactForm() {
   const form = useForm<ContactFormValues>({
@@ -11,6 +11,7 @@ export function ContactForm() {
       senderName: '',
       senderEmail: '',
       message: '',
+      website: '',
     },
   });
 
@@ -27,16 +28,25 @@ export function ContactForm() {
 
   return (
     <form className="stacked-form" onSubmit={onSubmit}>
+      <label className="honeypot-field" aria-hidden="true">
+        Website
+        <input type="text" autoComplete="off" tabIndex={-1} {...form.register('website')} />
+      </label>
+
       <label>
         Name
         <input type="text" autoComplete="name" {...form.register('senderName')} />
-        {form.formState.errors.senderName && <span>{form.formState.errors.senderName.message}</span>}
+        {form.formState.errors.senderName && (
+          <span>{form.formState.errors.senderName.message}</span>
+        )}
       </label>
 
       <label>
         Email
         <input type="email" autoComplete="email" {...form.register('senderEmail')} />
-        {form.formState.errors.senderEmail && <span>{form.formState.errors.senderEmail.message}</span>}
+        {form.formState.errors.senderEmail && (
+          <span>{form.formState.errors.senderEmail.message}</span>
+        )}
       </label>
 
       <label>
@@ -50,7 +60,9 @@ export function ContactForm() {
       </button>
 
       {contactMutation.isSuccess && <p className="form-note">Message sent. Thank you.</p>}
-      {contactMutation.isError && <p className="form-error">Could not send the message. Please try again.</p>}
+      {contactMutation.isError && (
+        <p className="form-error">Could not send the message. Please try again.</p>
+      )}
     </form>
   );
 }

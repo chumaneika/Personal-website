@@ -1,0 +1,22 @@
+server:
+  address: ${APP_SERVER_ADDRESS:127.0.0.1}
+  forward-headers-strategy: framework
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: strict
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  flyway:
+    validate-on-migrate: true
+    clean-disabled: true
+
+app:
+  security:
+    require-https: true

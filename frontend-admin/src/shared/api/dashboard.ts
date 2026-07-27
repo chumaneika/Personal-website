@@ -1,4 +1,4 @@
-import { DashboardSummaryResponse } from '../types/api';
+import { type DashboardSummaryResponse } from '../types/api';
 import { httpClient } from './httpClient';
 
 export async function fetchDashboard() {

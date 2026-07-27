@@ -50,12 +50,20 @@ export function SkillsPage() {
         onChange={setSelectedCategory}
       />
       {metaQuery.isLoading && <p className="inline-status">Loading skill categories...</p>}
-      {metaQuery.isError && <p className="inline-status inline-status--error">Skill categories are temporarily unavailable.</p>}
+      {metaQuery.isError && (
+        <p className="inline-status inline-status--error">
+          Skill categories are temporarily unavailable.
+        </p>
+      )}
 
       {visibleSkills.length > 0 ? (
         <SkillGroups skills={visibleSkills} categories={categories} />
       ) : (
-        <PageState compact title="No visible skills yet" message="Visible skills will appear here after they are added." />
+        <PageState
+          compact
+          title="No visible skills yet"
+          message="Visible skills will appear here after they are added."
+        />
       )}
     </section>
   );
