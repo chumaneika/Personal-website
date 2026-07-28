@@ -1,42 +1,54 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchProfile } from '../shared/api/profile';
-import { LoadingState, PageState } from '../shared/components/PageState';
+import { data } from 'react-router';
+import type { Route } from './+types/ResumePage';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
+import { loadProfile } from '../shared/api/publicApi.server';
+import { PageState } from '../shared/components/PageState';
+import { SeoMetadata } from '../shared/components/SeoMetadata';
+import { getPublicSiteOrigin } from '../shared/config/runtime.server';
 import { getProfileName } from '../shared/utils/formatters';
 
-export function ResumePage() {
-  const profileQuery = useQuery({
-    queryKey: ['profile'],
-    queryFn: fetchProfile,
-  });
+export async function loader({ request }: Route.LoaderArgs) {
+  const metadata = getPublicDocumentMetadata('/resume', getPublicSiteOrigin());
 
-  if (profileQuery.isLoading) {
-    return <LoadingState label="Loading resume..." />;
+  try {
+    return { profile: await loadProfile(request.signal), metadata };
+  } catch {
+    return data({ profile: null, metadata }, { status: 503 });
   }
+}
 
-  if (profileQuery.isError || !profileQuery.data) {
+export function ResumePage({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
+  if (!loaderData.profile) {
     return (
-      <PageState
-        eyebrow="Resume"
-        title="Resume is unavailable"
-        message="The public profile could not be loaded right now."
-      />
+      <>
+        <SeoMetadata metadata={loaderData.metadata} />
+        <PageState
+          eyebrow="Resume"
+          title="Resume is unavailable"
+          message="The public profile could not be loaded right now."
+        />
+      </>
     );
   }
 
-  const profile = profileQuery.data;
+  const profile = loaderData.profile;
 
   if (!profile.resumeUrl) {
     return (
-      <PageState
-        eyebrow="Resume"
-        title="Resume is not published yet"
-        message="A downloadable resume will appear here when it is available."
-      />
+      <>
+        <SeoMetadata metadata={loaderData.metadata} />
+        <PageState
+          eyebrow="Resume"
+          title="Resume is not published yet"
+          message="A downloadable resume will appear here when it is available."
+        />
+      </>
     );
   }
 
   return (
     <section className="resume-page">
+      <SeoMetadata metadata={loaderData.metadata} />
       <div className="page-intro">
         <p className="eyebrow">Resume</p>
         <h1>{getProfileName(profile)}</h1>
@@ -48,3 +60,5 @@ export function ResumePage() {
     </section>
   );
 }
+
+export default ResumePage;

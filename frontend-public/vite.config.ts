@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { reactRouter } from '@react-router/dev/vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [reactRouter()],
   build: {
     emptyOutDir: true,
     sourcemap: false,
@@ -11,9 +11,28 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': 'http://localhost:8080',
+      '/sitemap.xml': {
+        target: 'http://localhost:8080',
+        configure(proxy) {
+          proxy.on('proxyReq', (proxyRequest, request) => {
+            if (request.headers.host) {
+              proxyRequest.setHeader('X-Forwarded-Host', request.headers.host);
+            }
+            proxyRequest.setHeader('X-Forwarded-Proto', 'http');
+          });
+        },
+      },
+      '/robots.txt': {
+        target: 'http://localhost:8080',
+        configure(proxy) {
+          proxy.on('proxyReq', (proxyRequest, request) => {
+            if (request.headers.host) {
+              proxyRequest.setHeader('X-Forwarded-Host', request.headers.host);
+            }
+            proxyRequest.setHeader('X-Forwarded-Proto', 'http');
+          });
+        },
+      },
     },
-  },
-  preview: {
-    port: 4173,
   },
 });

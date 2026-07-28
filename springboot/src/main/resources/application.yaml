@@ -77,6 +77,7 @@ sentry:
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.0}
 
 server:
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:framework}
   servlet:
     session:
       timeout: ${APP_SESSION_TIMEOUT:30m}

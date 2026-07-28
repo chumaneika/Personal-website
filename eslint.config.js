@@ -57,5 +57,11 @@ export default defineConfig([
       'react-refresh/only-export-components': 'off',
     },
   },
+  {
+    files: ['frontend-public/src/app/AppLayout.tsx', 'frontend-public/src/pages/**/*Page.tsx'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
   prettier,
 ]);

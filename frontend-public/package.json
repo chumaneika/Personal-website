@@ -4,31 +4,38 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite --host 0.0.0.0",
-    "typecheck": "tsc --noEmit",
+    "dev": "react-router dev --host 0.0.0.0",
+    "typegen": "react-router typegen",
+    "typecheck": "npm run typegen && tsc --noEmit",
     "lint": "eslint src --max-warnings=0",
     "lint:fix": "eslint src --fix --max-warnings=0",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "build": "npm run build:production",
-    "build:production": "npm run typecheck && vite build --mode production",
-    "preview": "vite preview --host 0.0.0.0"
+    "build:production": "npm run typecheck && react-router build",
+    "start": "react-router-serve build/server/index.js",
+    "preview": "npm run start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
+    "@react-router/node": "7.18.0",
+    "@react-router/serve": "7.18.0",
     "@sentry/react": "^10.68.0",
     "@tanstack/react-query": "^5.80.7",
     "axios": "^1.10.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.58.1",
+    "react-router": "7.18.0",
     "react-router-dom": "^7.6.2",
-    "zod": "^3.25.67"
+    "zod": "^3.25.67",
+    "isbot": "^5"
   },
   "devDependencies": {
+    "@react-router/dev": "7.18.0",
+    "@types/node": "^22.15.30",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.5.2",
     "sass": "^1.89.2",
     "typescript": "~5.8.3",
     "vite": "^6.3.5"

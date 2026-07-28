@@ -137,6 +137,8 @@ jobs:
       APP_SECRETS_DIRECTORY: /tmp/personal-website-ci-secrets
       RELEASE_VERSION: ci
       PUBLIC_DOMAIN: public.example.invalid
+      PUBLIC_BACKEND_INTERNAL_URL: http://backend:8080/api
+      PUBLIC_SITE_ORIGIN: https://public.example.invalid
       ADMIN_DOMAIN: admin.example.invalid
       PUBLIC_SITE_PROBE_URL: https://public.example.invalid/
       ADMIN_SITE_PROBE_URL: https://admin.example.invalid/login
@@ -172,7 +174,7 @@ jobs:
       - name: Verify non-root runtime users
         run: |
           test "$(docker image inspect "personal-website-backend:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "app"
-          test "$(docker image inspect "personal-website-frontend-public:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "nginx"
+          test "$(docker image inspect "personal-website-frontend-public:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "node"
           test "$(docker image inspect "personal-website-frontend-admin:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "nginx"
           test "$(docker image inspect "personal-website-edge-proxy:${RELEASE_VERSION}" --format '{{.Config.User}}')" = "caddy"
 
@@ -185,12 +187,12 @@ jobs:
           "personal-website-edge-proxy:${RELEASE_VERSION}"
           validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
-      - name: Verify SPA fallbacks
+      - name: Verify frontend runtimes
         run: |
           docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
             --security-opt no-new-privileges:true \
             --entrypoint /bin/sh "personal-website-frontend-public:${RELEASE_VERSION}" \
-            -c 'nginx; wget -q -O /tmp/index.html http://127.0.0.1:8080/; wget -q -O /tmp/route.html http://127.0.0.1:8080/projects/ci-smoke; cmp /tmp/index.html /tmp/route.html; nginx -s quit'
+            -c 'npm run start & server_pid=$!; for attempt in 1 2 3 4 5 6 7 8 9 10; do wget -q -O /dev/null http://127.0.0.1:8080/healthz && break; sleep 1; done; wget -q -O /dev/null http://127.0.0.1:8080/healthz; kill "$server_pid"; wait "$server_pid" || true'
           docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
             --security-opt no-new-privileges:true \
             --entrypoint /bin/sh "personal-website-frontend-admin:${RELEASE_VERSION}" \

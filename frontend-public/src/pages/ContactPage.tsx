@@ -1,18 +1,27 @@
-import { useQuery } from '@tanstack/react-query';
+import type { Route } from './+types/ContactPage';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
 import { ContactForm } from '../features/contact/ContactForm';
-import { fetchProfile } from '../shared/api/profile';
+import { loadProfile } from '../shared/api/publicApi.server';
 import { PageState } from '../shared/components/PageState';
+import { SeoMetadata } from '../shared/components/SeoMetadata';
 import { SocialLinks } from '../shared/components/SocialLinks';
+import { getPublicSiteOrigin } from '../shared/config/runtime.server';
 import { getProfileName } from '../shared/utils/formatters';
 
-export function ContactPage() {
-  const profileQuery = useQuery({
-    queryKey: ['profile'],
-    queryFn: fetchProfile,
-  });
+export async function loader({ request }: Route.LoaderArgs) {
+  const metadata = getPublicDocumentMetadata('/contacts', getPublicSiteOrigin());
 
+  try {
+    return { profile: await loadProfile(request.signal), profileUnavailable: false, metadata };
+  } catch {
+    return { profile: null, profileUnavailable: true, metadata };
+  }
+}
+
+export function ContactPage({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
   return (
     <section className="contact-page">
+      <SeoMetadata metadata={loaderData.metadata} />
       <div className="page-intro">
         <p className="eyebrow">Contact</p>
         <h1>Tell me about the project</h1>
@@ -20,11 +29,7 @@ export function ContactPage() {
           Share a few details about the work, timeline, or backend challenge you want to discuss.
         </p>
 
-        {profileQuery.isLoading && (
-          <PageState compact title="Loading contacts" message="Public contact links are loading." />
-        )}
-
-        {profileQuery.isError && (
+        {loaderData.profileUnavailable && (
           <PageState
             compact
             title="Contact links unavailable"
@@ -32,11 +37,11 @@ export function ContactPage() {
           />
         )}
 
-        {profileQuery.data && (
+        {loaderData.profile && (
           <div className="contact-panel">
-            <h2>{getProfileName(profileQuery.data)}</h2>
-            {profileQuery.data.location && <p>{profileQuery.data.location}</p>}
-            <SocialLinks profile={profileQuery.data} includeEmail />
+            <h2>{getProfileName(loaderData.profile)}</h2>
+            {loaderData.profile.location && <p>{loaderData.profile.location}</p>}
+            <SocialLinks profile={loaderData.profile} includeEmail />
           </div>
         )}
       </div>
@@ -44,3 +49,5 @@ export function ContactPage() {
     </section>
   );
 }
+
+export default ContactPage;

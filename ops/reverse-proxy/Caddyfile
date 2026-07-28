@@ -17,7 +17,13 @@ http://127.0.0.1:2019 {
 		Strict-Transport-Security "max-age=31536000"
 		-Server
 	}
-	reverse_proxy frontend-public:8080
+	@publicBackend path /api/* /robots.txt /sitemap.xml
+	handle @publicBackend {
+		reverse_proxy backend:8080
+	}
+	handle {
+		reverse_proxy frontend-public:8080
+	}
 }
 
 {$ADMIN_DOMAIN} {

@@ -3,12 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AppLayout } from './AppLayout';
 import { renderPublicRoute } from '../test/render';
 
-const homeMocks = vi.hoisted(() => ({
-  fetchHome: vi.fn(),
-}));
-
-vi.mock('../shared/api/home', () => homeMocks);
-
 describe('primary mobile scenarios', () => {
   beforeEach(() => {
     Object.defineProperty(window, 'innerWidth', {
@@ -24,12 +18,6 @@ describe('primary mobile scenarios', () => {
       }),
     });
     window.localStorage.clear();
-    homeMocks.fetchHome.mockReset();
-    homeMocks.fetchHome.mockResolvedValue({
-      profile: null,
-      projects: [],
-      skills: [],
-    });
   });
 
   it('keeps navigation and theme controls usable at a phone viewport', async () => {
@@ -38,7 +26,7 @@ describe('primary mobile scenarios', () => {
       routes: [
         {
           path: '/',
-          element: <AppLayout />,
+          element: <AppLayout loaderData={{ profile: null }} />,
           children: [
             { index: true, element: <h1>Mobile home</h1> },
             { path: 'projects', element: <h1>Mobile projects</h1> },

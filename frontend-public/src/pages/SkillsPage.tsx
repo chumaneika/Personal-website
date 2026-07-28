@@ -1,43 +1,70 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { data } from 'react-router';
+import type { Route } from './+types/SkillsPage';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
 import { CategoryFilter } from '../features/skills/CategoryFilter';
 import { SkillGroups } from '../features/skills/SkillGroups';
-import { fetchSkillCategories } from '../shared/api/meta';
-import { fetchSkills } from '../shared/api/skills';
-import { LoadingState, PageState } from '../shared/components/PageState';
+import { loadSkillCategories, loadSkills } from '../shared/api/publicApi.server';
+import { PageState } from '../shared/components/PageState';
+import { SeoMetadata } from '../shared/components/SeoMetadata';
+import { getPublicSiteOrigin } from '../shared/config/runtime.server';
 import type { SkillCategoryResponse } from '../shared/types/api';
 import { normalizeSkillCategories } from '../shared/utils/formatters';
 
-export function SkillsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<SkillCategoryResponse | null>(null);
-  const metaQuery = useQuery({
-    queryKey: ['skill-categories'],
-    queryFn: fetchSkillCategories,
-  });
-  const skillsQuery = useQuery({
-    queryKey: ['skills', selectedCategory?.id ?? 'all'],
-    queryFn: () => fetchSkills(selectedCategory?.id),
-  });
+export async function loader({ request }: Route.LoaderArgs) {
+  const metadata = getPublicDocumentMetadata('/skills', getPublicSiteOrigin());
+  const [skillsResult, categoriesResult] = await Promise.allSettled([
+    loadSkills(undefined, request.signal),
+    loadSkillCategories(request.signal),
+  ]);
 
-  if (skillsQuery.isLoading) {
-    return <LoadingState label="Loading skills..." />;
-  }
-
-  if (skillsQuery.isError) {
-    return (
-      <PageState
-        eyebrow="Skills"
-        title="Skills are unavailable"
-        message="The public skill list could not be loaded right now."
-      />
+  if (skillsResult.status === 'rejected') {
+    return data(
+      {
+        skills: [],
+        categories: [],
+        categoriesUnavailable: categoriesResult.status === 'rejected',
+        unavailable: true,
+        metadata,
+      },
+      { status: 503 },
     );
   }
 
-  const visibleSkills = skillsQuery.data?.filter((skill) => skill.visible !== false) ?? [];
-  const categories = normalizeSkillCategories(metaQuery.data, visibleSkills);
+  return {
+    skills: skillsResult.value,
+    categories: categoriesResult.status === 'fulfilled' ? categoriesResult.value : [],
+    categoriesUnavailable: categoriesResult.status === 'rejected',
+    unavailable: false,
+    metadata,
+  };
+}
+
+export function SkillsPage({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
+  const [selectedCategory, setSelectedCategory] = useState<SkillCategoryResponse | null>(null);
+
+  if (loaderData.unavailable) {
+    return (
+      <>
+        <SeoMetadata metadata={loaderData.metadata} />
+        <PageState
+          eyebrow="Skills"
+          title="Skills are unavailable"
+          message="The public skill list could not be loaded right now."
+        />
+      </>
+    );
+  }
+
+  const allVisibleSkills = loaderData.skills.filter((skill) => skill.visible !== false);
+  const visibleSkills = selectedCategory
+    ? allVisibleSkills.filter((skill) => skill.category.id === selectedCategory.id)
+    : allVisibleSkills;
+  const categories = normalizeSkillCategories(loaderData.categories, allVisibleSkills);
 
   return (
     <section className="stack-page">
+      <SeoMetadata metadata={loaderData.metadata} />
       <header className="page-intro">
         <p className="eyebrow">Skills</p>
         <h1>Backend-first engineering stack</h1>
@@ -49,8 +76,7 @@ export function SkillsPage() {
         selectedCategoryId={selectedCategory?.id ?? null}
         onChange={setSelectedCategory}
       />
-      {metaQuery.isLoading && <p className="inline-status">Loading skill categories...</p>}
-      {metaQuery.isError && (
+      {loaderData.categoriesUnavailable && (
         <p className="inline-status inline-status--error">
           Skill categories are temporarily unavailable.
         </p>
@@ -68,3 +94,5 @@ export function SkillsPage() {
     </section>
   );
 }
+
+export default SkillsPage;

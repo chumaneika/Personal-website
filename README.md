@@ -2,10 +2,12 @@
 
 Monorepo with two frontend applications:
 
-- `frontend-public` - public-facing website
+- `frontend-public` - public-facing React Router application rendered by Node.js
 - `frontend-admin` - admin interface
 
-Both frontends use React, TypeScript, Vite, React Router, SCSS, Axios, TanStack Query, React Hook Form, and Zod.
+Both frontends use React, TypeScript, Vite, React Router, SCSS, Axios, TanStack
+Query, React Hook Form, and Zod. The public frontend uses React Router 7
+Framework Mode with server-side rendering; the admin remains a browser-only SPA.
 
 The backend uses Java 17, Spring Boot, Spring Security, Spring Data JPA, and PostgreSQL.
 The production deployment also includes Actuator, Prometheus, Alertmanager,
@@ -62,7 +64,7 @@ npm run test:watch
 
 ## Frontend production builds
 
-The two deployable browser bundles are built and verified independently:
+The two deployable frontends are built and verified independently:
 
 ```bash
 npm ci
@@ -70,17 +72,18 @@ npm run build:public
 npm run build:admin
 ```
 
-The commands run TypeScript checks, invoke Vite explicitly in production mode,
-empty the previous output, disable source maps, and verify the generated entry
-assets. The results are written to `frontend-public/dist` and
-`frontend-admin/dist`.
+The commands run React Router type generation and TypeScript checks, create
+production builds without source maps, and verify the generated entry assets.
+The public build contains `frontend-public/build/server` for the Node SSR
+runtime and `frontend-public/build/client` for browser assets. The admin SPA is
+written to `frontend-admin/dist`.
 
-Both applications use the same-origin `/api` endpoint by default. This is the
-recommended production configuration because the Nginx images proxy that path
-to the private backend. For a separate API origin, set
-`PUBLIC_FRONTEND_API_URL` or `ADMIN_FRONTEND_API_URL` before building the
-Docker images. These values are embedded in browser code and must never contain
-secrets.
+The public SSR server reads data through `PUBLIC_BACKEND_INTERNAL_URL`. This is
+a Node runtime variable and is never embedded into the browser bundle. The
+contact form and the admin SPA use the same-origin `/api` endpoint by default.
+For a separate browser API origin, set `PUBLIC_FRONTEND_API_URL` or
+`ADMIN_FRONTEND_API_URL` before building the Docker images. Browser variables
+are public and must never contain secrets.
 
 Build both production images with:
 
@@ -109,6 +112,24 @@ Run the backend with Java 17:
 ```bash
 cd springboot
 ./mvnw spring-boot:run
+```
+
+Then run the public SSR frontend:
+
+```bash
+PUBLIC_BACKEND_INTERNAL_URL=http://localhost:8080/api \
+PUBLIC_SITE_ORIGIN=http://localhost:5173 \
+npm run dev:public
+```
+
+For a local production-mode check:
+
+```bash
+npm run build:public
+cd frontend-public
+PUBLIC_BACKEND_INTERNAL_URL=http://localhost:8080/api \
+PUBLIC_SITE_ORIGIN=http://localhost:3000 \
+PORT=3000 npm run start
 ```
 
 Copy `.env.example` to `.env` before starting the backend or Docker Compose.
@@ -196,17 +217,18 @@ edge proxy terminates TLS and sends the standard forwarded headers.
 
 ## HTTPS deployment and private services
 
-Docker Compose builds both Vite applications, serves them with separate
-non-root Nginx containers, and places Caddy in front of them:
+Docker Compose builds the public React Router server and the admin Vite SPA.
+The public site runs in a non-root Node.js container, the admin runs in its
+existing non-root Nginx container, and Caddy sits in front of both:
 
 ```text
 Internet :80/:443
         |
    edge-proxy
       /    \
- public   admin
+Node SSR  admin SPA
       \    /
-      backend
+   Spring Boot
          |
      PostgreSQL
 ```
@@ -216,10 +238,19 @@ from the edge and application Docker networks, Spring Boot is reachable only
 from the application network, and PostgreSQL is attached exclusively to the
 internal database network. PostgreSQL has no host port mapping.
 
-Set `PUBLIC_DOMAIN`, `ADMIN_DOMAIN`, and `ACME_EMAIL` in `.env`. Point both
-domains' A/AAAA records to the server and allow inbound TCP ports 80 and 443
-plus UDP port 443. Set the two exact HTTPS origins in
-`APP_CORS_ALLOWED_ORIGINS`.
+For the public domain, Caddy sends `/api/*`, `/robots.txt`, and `/sitemap.xml`
+directly to Spring Boot. Every other public URL goes to the Node SSR frontend.
+The Node server loads page data from `http://backend:8080/api` inside Docker and
+returns content and SEO metadata in the initial HTML. The admin domain continues
+to use the unchanged Nginx SPA runtime.
+
+Set `PUBLIC_DOMAIN`, `ADMIN_DOMAIN`, `ACME_EMAIL`,
+`PUBLIC_BACKEND_INTERNAL_URL`, and `PUBLIC_SITE_ORIGIN` in `.env`. Compose uses
+the Docker-internal backend URL and derives the production site origin from
+`PUBLIC_DOMAIN`; the explicit values in `.env` also document the equivalent
+settings for direct runs outside Compose. Point both domains' A/AAAA records to
+the server and allow inbound TCP ports 80 and 443 plus UDP port 443. Set the two
+exact HTTPS origins in `APP_CORS_ALLOWED_ORIGINS`.
 
 Set a new immutable `RELEASE_VERSION` before each deployment. Compose applies
 the same tag to every application image, which allows the complete application
@@ -240,9 +271,9 @@ managed certificates before expiration. Its `/data` and `/config` directories
 use persistent Docker volumes, so certificates and ACME state survive container
 replacement. Do not delete `caddy_data` during routine deployments.
 
-Both frontend servers proxy `/api` to the backend. All other unknown frontend
-paths fall back to `index.html`, so direct navigation to React Router URLs works.
-Hashed Vite assets receive immutable cache headers.
+The public Node runtime exposes `/healthz`. Missing public routes and missing
+project or article slugs return a real HTTP `404`; the admin Nginx runtime keeps
+its SPA fallback. Hashed Vite assets are still served from the public build.
 
 Verify the deployment:
 

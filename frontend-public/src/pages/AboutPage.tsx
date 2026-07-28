@@ -1,34 +1,46 @@
-import { useQuery } from '@tanstack/react-query';
-import { fetchProfile } from '../shared/api/profile';
-import { LoadingState, PageState } from '../shared/components/PageState';
+import { data } from 'react-router';
+import type { Route } from './+types/AboutPage';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
+import { getPersonStructuredData } from '../app/structuredData';
+import { loadProfile } from '../shared/api/publicApi.server';
+import { PageState } from '../shared/components/PageState';
 import { Prose } from '../shared/components/Prose';
+import { SeoMetadata } from '../shared/components/SeoMetadata';
 import { SocialLinks } from '../shared/components/SocialLinks';
+import { StructuredData } from '../shared/components/StructuredData';
+import { getPublicSiteOrigin } from '../shared/config/runtime.server';
 import { getProfileName } from '../shared/utils/formatters';
 
-export function AboutPage() {
-  const profileQuery = useQuery({
-    queryKey: ['profile'],
-    queryFn: fetchProfile,
-  });
+export async function loader({ request }: Route.LoaderArgs) {
+  const metadata = getPublicDocumentMetadata('/about', getPublicSiteOrigin());
 
-  if (profileQuery.isLoading) {
-    return <LoadingState label="Loading profile..." />;
+  try {
+    return { profile: await loadProfile(request.signal), metadata };
+  } catch {
+    return data({ profile: null, metadata }, { status: 503 });
   }
+}
 
-  if (profileQuery.isError || !profileQuery.data) {
+export function AboutPage({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
+  if (!loaderData.profile) {
     return (
-      <PageState
-        eyebrow="About"
-        title="Profile is unavailable"
-        message="The public profile could not be loaded right now."
-      />
+      <>
+        <SeoMetadata metadata={loaderData.metadata} />
+        <PageState
+          eyebrow="About"
+          title="Profile is unavailable"
+          message="The public profile could not be loaded right now."
+        />
+      </>
     );
   }
 
-  const profile = profileQuery.data;
+  const profile = loaderData.profile;
 
   return (
     <section className="content-layout">
+      <SeoMetadata metadata={loaderData.metadata} />
+      <StructuredData data={getPersonStructuredData(profile, loaderData.metadata.canonicalUrl)} />
       <header className="page-intro">
         <p className="eyebrow">About</p>
         <h1>{getProfileName(profile)}</h1>
@@ -65,3 +77,5 @@ export function AboutPage() {
     </section>
   );
 }
+
+export default AboutPage;

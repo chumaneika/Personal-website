@@ -48,6 +48,7 @@ services:
       start_period: 5s
     networks:
       - edge
+      - application
 
   postgres:
     image: postgres:16-alpine
@@ -196,9 +197,8 @@ services:
     image: personal-website-frontend-public:${RELEASE_VERSION:?RELEASE_VERSION is required}
     build:
       context: .
-      dockerfile: ops/frontend/Dockerfile
+      dockerfile: ops/frontend-public/Dockerfile
       args:
-        FRONTEND_WORKSPACE: frontend-public
         VITE_PUBLIC_API_URL: ${PUBLIC_FRONTEND_API_URL:-/api}
         VITE_PUBLIC_SENTRY_DSN: ${VITE_PUBLIC_SENTRY_DSN:-}
         VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-production}
@@ -209,6 +209,11 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      PUBLIC_BACKEND_INTERNAL_URL: ${PUBLIC_BACKEND_INTERNAL_URL:-http://backend:8080/api}
+      PUBLIC_SITE_ORIGIN: ${PUBLIC_SITE_ORIGIN:?PUBLIC_SITE_ORIGIN is required}
+      HOST: 0.0.0.0
+      PORT: 8080
     expose:
       - "8080"
     read_only: true
@@ -223,7 +228,7 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
-      start_period: 5s
+      start_period: 10s
     networks:
       - edge
       - application

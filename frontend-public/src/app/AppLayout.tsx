@@ -1,7 +1,7 @@
-import { useLayoutEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { fetchHome } from '../shared/api/home';
+import type { Route } from './+types/AppLayout';
+import { loadProfile } from '../shared/api/publicApi.server';
 import { SocialLinks } from '../shared/components/SocialLinks';
 
 const navItems = [
@@ -18,11 +18,7 @@ type Theme = 'light' | 'dark';
 
 const themeStorageKey = 'public-theme';
 
-function getInitialTheme(): Theme {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-
+function getBrowserTheme(): Theme {
   const storedTheme = (() => {
     try {
       return window.localStorage.getItem(themeStorageKey);
@@ -38,17 +34,35 @@ function getInitialTheme(): Theme {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-export function AppLayout() {
-  const homeQuery = useQuery({
-    queryKey: ['home'],
-    queryFn: fetchHome,
-  });
-  const profile = homeQuery.data?.profile ?? null;
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+export async function loader({ request }: Route.LoaderArgs) {
+  try {
+    return { profile: await loadProfile(request.signal) };
+  } catch {
+    return { profile: null };
+  }
+}
+
+export function AppLayout({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
+  const profile = loaderData.profile;
+  const [theme, setTheme] = useState<Theme>('light');
+  const [themeReady, setThemeReady] = useState(false);
   const year = new Date().getFullYear();
   const nextTheme = theme === 'light' ? 'dark' : 'light';
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setTheme(getBrowserTheme());
+      setThemeReady(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
+
+  useEffect(() => {
+    if (!themeReady) {
+      return;
+    }
+
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
     try {
@@ -56,7 +70,7 @@ export function AppLayout() {
     } catch {
       // Theme still works for this session when storage is unavailable.
     }
-  }, [theme]);
+  }, [theme, themeReady]);
 
   return (
     <div className="app-shell">
@@ -100,3 +114,5 @@ export function AppLayout() {
     </div>
   );
 }
+
+export default AppLayout;

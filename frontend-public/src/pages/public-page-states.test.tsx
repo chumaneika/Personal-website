@@ -1,5 +1,6 @@
 import { screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
 import { ArticleDetailsPage } from './ArticleDetailsPage';
 import { BlogPage } from './BlogPage';
 import { HomePage } from './HomePage';
@@ -8,96 +9,74 @@ import { ProjectsPage } from './ProjectsPage';
 import { SkillsPage } from './SkillsPage';
 import { renderPublicRoute } from '../test/render';
 
-const articleMocks = vi.hoisted(() => ({
-  fetchArticleBySlug: vi.fn(),
-  fetchArticles: vi.fn(),
-}));
-const homeMocks = vi.hoisted(() => ({
-  fetchHome: vi.fn(),
-}));
-const projectMocks = vi.hoisted(() => ({
-  fetchProjectBySlug: vi.fn(),
-  fetchProjects: vi.fn(),
-}));
-const skillMocks = vi.hoisted(() => ({
-  fetchSkills: vi.fn(),
-}));
-const metaMocks = vi.hoisted(() => ({
-  fetchSkillCategories: vi.fn(),
-}));
-
-vi.mock('../shared/api/articles', () => articleMocks);
-vi.mock('../shared/api/home', () => homeMocks);
-vi.mock('../shared/api/projects', () => projectMocks);
-vi.mock('../shared/api/skills', () => skillMocks);
-vi.mock('../shared/api/meta', () => metaMocks);
+const origin = 'https://malik.example';
 
 describe('public page loading and error states', () => {
-  beforeEach(() => {
-    Object.values(articleMocks).forEach((mock) => mock.mockReset());
-    Object.values(homeMocks).forEach((mock) => mock.mockReset());
-    Object.values(projectMocks).forEach((mock) => mock.mockReset());
-    Object.values(skillMocks).forEach((mock) => mock.mockReset());
-    Object.values(metaMocks).forEach((mock) => mock.mockReset());
-    metaMocks.fetchSkillCategories.mockResolvedValue([]);
-  });
-
-  it('shows a loading state while projects are being fetched', () => {
-    projectMocks.fetchProjects.mockReturnValue(
-      new Promise<never>(() => {
-        // Intentionally pending to assert the intermediate state.
-      }),
-    );
-
-    renderPublicRoute(<ProjectsPage />, {
-      route: '/projects',
-      path: '/projects',
-    });
-
-    expect(screen.getByText('Loading projects...')).toBeInTheDocument();
-    expect(
-      screen.getByText('Loading projects...').closest('[aria-busy="true"]'),
-    ).toBeInTheDocument();
-  });
-
   it.each([
     {
       title: 'projects',
-      element: <ProjectsPage />,
+      element: (
+        <ProjectsPage
+          loaderData={{
+            projects: [],
+            unavailable: true,
+            metadata: getPublicDocumentMetadata('/projects', origin),
+          }}
+        />
+      ),
       route: '/projects',
       path: '/projects',
-      arrange: () => projectMocks.fetchProjects.mockRejectedValue(new Error('Offline')),
       expected: 'Projects are unavailable',
     },
     {
       title: 'blog',
-      element: <BlogPage />,
+      element: (
+        <BlogPage
+          loaderData={{
+            articles: [],
+            unavailable: true,
+            metadata: getPublicDocumentMetadata('/blog', origin),
+          }}
+        />
+      ),
       route: '/blog',
       path: '/blog',
-      arrange: () => articleMocks.fetchArticles.mockRejectedValue(new Error('Offline')),
       expected: 'Articles are unavailable',
     },
     {
       title: 'skills',
-      element: <SkillsPage />,
+      element: (
+        <SkillsPage
+          loaderData={{
+            skills: [],
+            categories: [],
+            categoriesUnavailable: false,
+            unavailable: true,
+            metadata: getPublicDocumentMetadata('/skills', origin),
+          }}
+        />
+      ),
       route: '/skills',
       path: '/skills',
-      arrange: () => skillMocks.fetchSkills.mockRejectedValue(new Error('Offline')),
       expected: 'Skills are unavailable',
     },
     {
       title: 'home',
-      element: <HomePage />,
+      element: (
+        <HomePage
+          loaderData={{
+            home: null,
+            articles: [],
+            articlesUnavailable: true,
+            metadata: getPublicDocumentMetadata('/', origin),
+          }}
+        />
+      ),
       route: '/',
       path: '/',
-      arrange: () => {
-        homeMocks.fetchHome.mockRejectedValue(new Error('Offline'));
-        articleMocks.fetchArticles.mockResolvedValue([]);
-      },
       expected: 'The public site is temporarily unavailable',
     },
-  ])('shows the $title fallback when its primary request fails', async (scenario) => {
-    scenario.arrange();
+  ])('shows the $title server fallback when its loader data is unavailable', async (scenario) => {
     renderPublicRoute(scenario.element, {
       route: scenario.route,
       path: scenario.path,
@@ -107,21 +86,35 @@ describe('public page loading and error states', () => {
   });
 
   it('distinguishes missing project and article details from generic failures', async () => {
-    const notFoundError = { isAxiosError: true, response: { status: 404 } };
-    projectMocks.fetchProjectBySlug.mockRejectedValue(notFoundError);
-    articleMocks.fetchArticleBySlug.mockRejectedValue(notFoundError);
-
-    const projectView = renderPublicRoute(<ProjectDetailsPage />, {
-      route: '/projects/missing',
-      path: '/projects/:slug',
-    });
+    const projectView = renderPublicRoute(
+      <ProjectDetailsPage
+        loaderData={{
+          project: null,
+          state: 'not-found',
+          metadata: getPublicDocumentMetadata('/projects/missing', origin),
+        }}
+      />,
+      {
+        route: '/projects/missing',
+        path: '/projects/:slug',
+      },
+    );
     expect(await screen.findByRole('heading', { name: 'Project not found' })).toBeInTheDocument();
 
     projectView.unmount();
-    renderPublicRoute(<ArticleDetailsPage />, {
-      route: '/blog/missing',
-      path: '/blog/:slug',
-    });
+    renderPublicRoute(
+      <ArticleDetailsPage
+        loaderData={{
+          article: null,
+          state: 'not-found',
+          metadata: getPublicDocumentMetadata('/blog/missing', origin),
+        }}
+      />,
+      {
+        route: '/blog/missing',
+        path: '/blog/:slug',
+      },
+    );
     expect(await screen.findByRole('heading', { name: 'Article not found' })).toBeInTheDocument();
   });
 });

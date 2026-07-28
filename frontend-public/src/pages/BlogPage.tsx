@@ -1,32 +1,41 @@
-import { useQuery } from '@tanstack/react-query';
+import { data } from 'react-router';
+import type { Route } from './+types/BlogPage';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
 import { ArticleGrid } from '../features/article-list/ArticleGrid';
-import { fetchArticles } from '../shared/api/articles';
-import { LoadingState, PageState } from '../shared/components/PageState';
+import { loadArticles } from '../shared/api/publicApi.server';
+import { PageState } from '../shared/components/PageState';
+import { SeoMetadata } from '../shared/components/SeoMetadata';
+import { getPublicSiteOrigin } from '../shared/config/runtime.server';
 
-export function BlogPage() {
-  const articlesQuery = useQuery({
-    queryKey: ['articles'],
-    queryFn: fetchArticles,
-  });
+export async function loader({ request }: Route.LoaderArgs) {
+  const metadata = getPublicDocumentMetadata('/blog', getPublicSiteOrigin());
 
-  if (articlesQuery.isLoading) {
-    return <LoadingState label="Loading articles..." />;
+  try {
+    return { articles: await loadArticles(request.signal), unavailable: false, metadata };
+  } catch {
+    return data({ articles: [], unavailable: true, metadata }, { status: 503 });
   }
+}
 
-  if (articlesQuery.isError) {
+export function BlogPage({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
+  if (loaderData.unavailable) {
     return (
-      <PageState
-        eyebrow="Blog"
-        title="Articles are unavailable"
-        message="Published articles could not be loaded right now."
-      />
+      <>
+        <SeoMetadata metadata={loaderData.metadata} />
+        <PageState
+          eyebrow="Blog"
+          title="Articles are unavailable"
+          message="Published articles could not be loaded right now."
+        />
+      </>
     );
   }
 
-  const articles = articlesQuery.data ?? [];
+  const articles = loaderData.articles;
 
   return (
     <section className="stack-page">
+      <SeoMetadata metadata={loaderData.metadata} />
       <header className="page-intro">
         <p className="eyebrow">Blog</p>
         <h1>Engineering notes and articles</h1>
@@ -47,3 +56,5 @@ export function BlogPage() {
     </section>
   );
 }
+
+export default BlogPage;

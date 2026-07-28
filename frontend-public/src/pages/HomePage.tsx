@@ -1,46 +1,74 @@
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { data } from 'react-router';
+import type { Route } from './+types/HomePage';
+import { getPublicDocumentMetadata } from '../app/documentTitles';
+import { getPersonStructuredData } from '../app/structuredData';
 import { ArticleGrid } from '../features/article-list/ArticleGrid';
 import { ProjectGrid } from '../features/project-list/ProjectGrid';
 import { SkillGroups } from '../features/skills/SkillGroups';
-import { fetchArticles } from '../shared/api/articles';
-import { fetchHome } from '../shared/api/home';
-import { LoadingState, PageState } from '../shared/components/PageState';
+import { loadArticles, loadHome } from '../shared/api/publicApi.server';
+import { PageState } from '../shared/components/PageState';
+import { SeoMetadata } from '../shared/components/SeoMetadata';
 import { SocialLinks } from '../shared/components/SocialLinks';
+import { StructuredData } from '../shared/components/StructuredData';
+import { getPublicSiteOrigin } from '../shared/config/runtime.server';
 import { getInitials, getProfileName, normalizeSkillCategories } from '../shared/utils/formatters';
 
-export function HomePage() {
-  const homeQuery = useQuery({
-    queryKey: ['home'],
-    queryFn: fetchHome,
-  });
-  const articlesQuery = useQuery({
-    queryKey: ['articles'],
-    queryFn: fetchArticles,
-  });
+export async function loader({ request }: Route.LoaderArgs) {
+  const metadata = getPublicDocumentMetadata('/', getPublicSiteOrigin());
+  const [homeResult, articlesResult] = await Promise.allSettled([
+    loadHome(request.signal),
+    loadArticles(request.signal),
+  ]);
 
-  if (homeQuery.isLoading) {
-    return <LoadingState label="Loading portfolio..." />;
-  }
-
-  if (homeQuery.isError) {
-    return (
-      <PageState
-        eyebrow="Portfolio"
-        title="The public site is temporarily unavailable"
-        message="Please try again in a moment."
-      />
+  if (homeResult.status === 'rejected') {
+    return data(
+      {
+        home: null,
+        articles: [],
+        articlesUnavailable: articlesResult.status === 'rejected',
+        metadata,
+      },
+      { status: 503 },
     );
   }
 
-  const profile = homeQuery.data?.profile ?? null;
-  const projects = homeQuery.data?.projects ?? [];
+  return {
+    home: homeResult.value,
+    articles: articlesResult.status === 'fulfilled' ? articlesResult.value : [],
+    articlesUnavailable: articlesResult.status === 'rejected',
+    metadata,
+  };
+}
+
+export function HomePage({ loaderData }: { loaderData: Route.ComponentProps['loaderData'] }) {
+  if (!loaderData.home) {
+    return (
+      <>
+        <SeoMetadata metadata={loaderData.metadata} />
+        <PageState
+          eyebrow="Portfolio"
+          title="The public site is temporarily unavailable"
+          message="Please try again in a moment."
+        />
+      </>
+    );
+  }
+
+  const profile = loaderData.home.profile ?? null;
+  const projects = loaderData.home.projects ?? [];
   const featuredProjects = projects.slice(0, 3);
-  const visibleSkills = homeQuery.data?.skills.filter((skill) => skill.visible !== false) ?? [];
+  const visibleSkills = loaderData.home.skills.filter((skill) => skill.visible !== false);
   const skillCategories = normalizeSkillCategories(undefined, visibleSkills);
 
   return (
     <>
+      <SeoMetadata metadata={loaderData.metadata} />
+      {profile && (
+        <StructuredData
+          data={getPersonStructuredData(profile, loaderData.metadata.canonicalUrl, visibleSkills)}
+        />
+      )}
       <section className="hero-section">
         <div className="hero-section__copy">
           <p className="eyebrow">Java Backend Developer</p>
@@ -130,18 +158,17 @@ export function HomePage() {
           </Link>
         </div>
 
-        {articlesQuery.isLoading && <LoadingState label="Loading articles..." />}
-        {articlesQuery.isError && (
+        {loaderData.articlesUnavailable && (
           <PageState
             compact
             title="Articles are unavailable"
             message="Published articles could not be loaded right now."
           />
         )}
-        {articlesQuery.isSuccess && articlesQuery.data.length > 0 && (
-          <ArticleGrid articles={articlesQuery.data.slice(0, 3)} />
+        {!loaderData.articlesUnavailable && loaderData.articles.length > 0 && (
+          <ArticleGrid articles={loaderData.articles.slice(0, 3)} />
         )}
-        {articlesQuery.isSuccess && articlesQuery.data.length === 0 && (
+        {!loaderData.articlesUnavailable && loaderData.articles.length === 0 && (
           <PageState
             compact
             title="Articles are coming soon"
@@ -152,3 +179,5 @@ export function HomePage() {
     </>
   );
 }
+
+export default HomePage;

@@ -1,6 +1,7 @@
 import { lazy, type ReactElement, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { AdminLayout } from './AdminLayout';
+import { DocumentTitleManager } from './DocumentTitleManager';
 import { LoginRoute, ProtectedRoute } from './RouteGuards';
 
 const DashboardPage = lazy(() =>
@@ -61,96 +62,101 @@ function lazyRoute(element: ReactElement) {
 
 export const router = createBrowserRouter([
   {
-    element: <LoginRoute />,
+    element: <DocumentTitleManager />,
     children: [
       {
-        path: '/login',
-        element: lazyRoute(<LoginPage />),
-      },
-    ],
-  },
-  {
-    element: <ProtectedRoute />,
-    children: [
-      {
-        path: '/',
-        element: <AdminLayout />,
+        element: <LoginRoute />,
         children: [
           {
-            index: true,
-            element: lazyRoute(<DashboardPage />),
+            path: '/login',
+            element: lazyRoute(<LoginPage />),
           },
+        ],
+      },
+      {
+        element: <ProtectedRoute />,
+        children: [
           {
-            path: 'profile',
-            element: lazyRoute(<ProfilePage />),
-          },
-          {
-            path: 'projects',
-            element: lazyRoute(<ProjectsPage />),
-          },
-          {
-            path: 'projects/new',
-            element: lazyRoute(<ProjectFormPage />),
-          },
-          {
-            path: 'projects/:id/edit',
-            element: lazyRoute(<ProjectFormPage />),
-          },
-          {
-            path: 'projects/:id/settings',
-            element: lazyRoute(<ProjectFormPage />),
-          },
-          {
-            path: 'articles',
-            element: lazyRoute(<ArticlesPage />),
-          },
-          {
-            path: 'articles/new',
-            element: lazyRoute(<ArticleFormPage />),
-          },
-          {
-            path: 'articles/:id/edit',
-            element: lazyRoute(<ArticleFormPage />),
-          },
-          {
-            path: 'skills',
-            element: lazyRoute(<SkillsPage />),
-          },
-          {
-            path: 'skills/new',
-            element: lazyRoute(<SkillFormPage />),
-          },
-          {
-            path: 'skills/:id/edit',
-            element: lazyRoute(<SkillFormPage />),
-          },
-          {
-            path: 'skill-categories',
-            element: lazyRoute(<SkillCategoriesPage />),
-          },
-          {
-            path: 'skill-categories/new',
-            element: lazyRoute(<SkillCategoryFormPage />),
-          },
-          {
-            path: 'skill-categories/:id/edit',
-            element: lazyRoute(<SkillCategoryFormPage />),
-          },
-          {
-            path: 'messages',
-            element: lazyRoute(<MessagesPage />),
-          },
-          {
-            path: 'messages/:id',
-            element: lazyRoute(<MessageDetailPage />),
-          },
-          {
-            path: 'settings',
-            element: lazyRoute(<SettingsPage />),
-          },
-          {
-            path: '*',
-            element: lazyRoute(<NotFoundPage />),
+            path: '/',
+            element: <AdminLayout />,
+            children: [
+              {
+                index: true,
+                element: lazyRoute(<DashboardPage />),
+              },
+              {
+                path: 'profile',
+                element: lazyRoute(<ProfilePage />),
+              },
+              {
+                path: 'projects',
+                element: lazyRoute(<ProjectsPage />),
+              },
+              {
+                path: 'projects/new',
+                element: lazyRoute(<ProjectFormPage />),
+              },
+              {
+                path: 'projects/:id/edit',
+                element: lazyRoute(<ProjectFormPage />),
+              },
+              {
+                path: 'projects/:id/settings',
+                element: lazyRoute(<ProjectFormPage />),
+              },
+              {
+                path: 'articles',
+                element: lazyRoute(<ArticlesPage />),
+              },
+              {
+                path: 'articles/new',
+                element: lazyRoute(<ArticleFormPage />),
+              },
+              {
+                path: 'articles/:id/edit',
+                element: lazyRoute(<ArticleFormPage />),
+              },
+              {
+                path: 'skills',
+                element: lazyRoute(<SkillsPage />),
+              },
+              {
+                path: 'skills/new',
+                element: lazyRoute(<SkillFormPage />),
+              },
+              {
+                path: 'skills/:id/edit',
+                element: lazyRoute(<SkillFormPage />),
+              },
+              {
+                path: 'skill-categories',
+                element: lazyRoute(<SkillCategoriesPage />),
+              },
+              {
+                path: 'skill-categories/new',
+                element: lazyRoute(<SkillCategoryFormPage />),
+              },
+              {
+                path: 'skill-categories/:id/edit',
+                element: lazyRoute(<SkillCategoryFormPage />),
+              },
+              {
+                path: 'messages',
+                element: lazyRoute(<MessagesPage />),
+              },
+              {
+                path: 'messages/:id',
+                element: lazyRoute(<MessageDetailPage />),
+              },
+              {
+                path: 'settings',
+                element: lazyRoute(<SettingsPage />),
+              },
+              {
+                path: '*',
+                element: lazyRoute(<NotFoundPage />),
+              },
+            ],
           },
         ],
       },
