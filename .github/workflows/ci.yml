@@ -126,7 +126,7 @@ jobs:
       - name: Require migration tests to execute
         run: >-
           grep -Eq
-          'tests="2" errors="0" skipped="0" failures="0"'
+          'tests="3" errors="0" skipped="0" failures="0"'
           springboot/target/surefire-reports/TEST-com.malik.personal_website.PostgreSqlMigrationIntegrationTests.xml
 
   docker-build:
@@ -138,6 +138,8 @@ jobs:
       RELEASE_VERSION: ci
       PUBLIC_DOMAIN: public.example.invalid
       ADMIN_DOMAIN: admin.example.invalid
+      PUBLIC_SITE_PROBE_URL: https://public.example.invalid/
+      ADMIN_SITE_PROBE_URL: https://admin.example.invalid/login
       ACME_EMAIL: ci@example.invalid
       POSTGRES_DB: personal_website_ci
       POSTGRES_USER: personal_website_ci
@@ -157,6 +159,8 @@ jobs:
           printf '%s' 'ci-admin-password-not-for-production-123' > "$APP_SECRETS_DIRECTORY/APP_ADMIN_PASSWORD"
           touch "$APP_SECRETS_DIRECTORY/APP_ADMIN_RECOVERY_PASSWORD"
           touch "$APP_SECRETS_DIRECTORY/SPRING_MAIL_PASSWORD"
+          printf '%s' 'ci-grafana-password-not-for-production-123' > "$APP_SECRETS_DIRECTORY/GRAFANA_ADMIN_PASSWORD"
+          printf '%s' 'https://alerts.example.invalid/alertmanager' > "$APP_SECRETS_DIRECTORY/ALERTMANAGER_WEBHOOK_URL"
           chmod 600 "$APP_SECRETS_DIRECTORY"/*
 
       - name: Validate Docker Compose

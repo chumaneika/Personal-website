@@ -9,6 +9,10 @@ http://127.0.0.1:2019 {
 
 {$PUBLIC_DOMAIN} {
 	encode zstd gzip
+	log {
+		output stdout
+		format json
+	}
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		-Server
@@ -18,6 +22,10 @@ http://127.0.0.1:2019 {
 
 {$ADMIN_DOMAIN} {
 	encode zstd gzip
+	log {
+		output stdout
+		format json
+	}
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		-Server

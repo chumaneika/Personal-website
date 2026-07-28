@@ -53,9 +53,8 @@ httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      queryClient.clear();
-
       if (window.location.pathname !== '/login') {
+        queryClient.clear();
         window.location.assign('/login');
       }
     }

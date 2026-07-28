@@ -3,6 +3,9 @@ package com.malik.personal_website;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.malik.personal_website.entities.ProjectEntity;
 import com.malik.personal_website.enums.PublicationStatus;
@@ -13,21 +16,25 @@ import java.time.LocalDate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
+@AutoConfigureMockMvc
 @SpringBootTest(properties = {
         "spring.flyway.baseline-on-migrate=false",
         "spring.jpa.hibernate.ddl-auto=validate",
-        "app.admin.initializer.enabled=false"
+        "app.admin.initializer.enabled=false",
+        "management.endpoint.health.show-details=always"
 })
 class PostgreSqlMigrationIntegrationTests {
 
@@ -40,6 +47,9 @@ class PostgreSqlMigrationIntegrationTests {
 
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
@@ -87,6 +97,15 @@ class PostgreSqlMigrationIntegrationTests {
                 DataIntegrityViolationException.class,
                 () -> insertProject("database-constraints", "2026-01-01", "2026-07-01")
         );
+    }
+
+    @Test
+    void readinessChecksThePostgreSqlConnection() throws Exception {
+        mockMvc.perform(get("/actuator/health/readiness"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"))
+                .andExpect(jsonPath("$.components.db.status").value("UP"))
+                .andExpect(jsonPath("$.components.db.details.database").value("PostgreSQL"));
     }
 
     private void insertProject(String slug, String startedAt, String completedAt) {

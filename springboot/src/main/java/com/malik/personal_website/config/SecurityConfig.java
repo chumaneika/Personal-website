@@ -2,6 +2,7 @@ package com.malik.personal_website.config;
 
 import com.malik.personal_website.enums.UserRole;
 import com.malik.personal_website.repositories.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -69,6 +70,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(apiSecurityErrorHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/actuator/health/**", "/actuator/prometheus").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/health").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/home").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profile").permitAll()
@@ -99,7 +101,10 @@ public class SecurityConfig {
                 );
 
         if (requireHttps) {
-            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
+            http.requiresChannel(channel -> channel
+                    .requestMatchers(request -> !isManagementGetRequest(request))
+                    .requiresSecure()
+            );
         }
 
         return http.build();
@@ -150,5 +155,16 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toList();
+    }
+
+    private static boolean isManagementGetRequest(HttpServletRequest request) {
+        if (!HttpMethod.GET.matches(request.getMethod())) {
+            return false;
+        }
+
+        String path = request.getRequestURI();
+        return "/actuator/prometheus".equals(path)
+                || "/actuator/health".equals(path)
+                || path.startsWith("/actuator/health/");
     }
 }

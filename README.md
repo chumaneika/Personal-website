@@ -8,6 +8,8 @@ Monorepo with two frontend applications:
 Both frontends use React, TypeScript, Vite, React Router, SCSS, Axios, TanStack Query, React Hook Form, and Zod.
 
 The backend uses Java 17, Spring Boot, Spring Security, Spring Data JPA, and PostgreSQL.
+The production deployment also includes Actuator, Prometheus, Alertmanager,
+Blackbox Exporter, Grafana, Loki, Alloy, and optional Sentry error reporting.
 
 ## Admin authentication
 
@@ -114,16 +116,20 @@ The file contains configuration only; passwords must not be added to it.
 
 ## External secrets
 
-Passwords are stored as files in a directory outside the repository. Create the
-directory, generate the database password, and create empty one-time bootstrap,
-recovery, and optional SMTP credential files:
+Sensitive deployment values are stored as files in a directory outside the
+repository. Create the directory, generate the database and Grafana passwords,
+create the one-time bootstrap/recovery and optional SMTP files, and provide the
+Alertmanager receiver URL:
 
 ```bash
 install -d -m 700 /secure/path/personal-website-secrets
 openssl rand -hex 32 | tr -d '\n' > /secure/path/personal-website-secrets/SPRING_DATASOURCE_PASSWORD
+openssl rand -hex 32 | tr -d '\n' > /secure/path/personal-website-secrets/GRAFANA_ADMIN_PASSWORD
 touch /secure/path/personal-website-secrets/APP_ADMIN_PASSWORD
 touch /secure/path/personal-website-secrets/APP_ADMIN_RECOVERY_PASSWORD
 touch /secure/path/personal-website-secrets/SPRING_MAIL_PASSWORD
+printf '%s' 'https://alerts.example.com/alertmanager' \
+  > /secure/path/personal-website-secrets/ALERTMANAGER_WEBHOOK_URL
 chmod 600 /secure/path/personal-website-secrets/*
 ```
 
@@ -133,15 +139,16 @@ Set the absolute external directory path in `.env`:
 APP_SECRETS_DIRECTORY=/secure/path/personal-website-secrets
 ```
 
-Docker Compose mounts only the password file required by each service under
-`/run/secrets`; password values are not placed in Compose, `.env`, container
-environment variables, or the image. PostgreSQL reads its password through
-`POSTGRES_PASSWORD_FILE`, while Spring Boot imports the mounted files as a
+Docker Compose mounts only the secret files required by each service under
+`/run/secrets`; their values are not placed in Compose, `.env`, container
+environment variables, or images. PostgreSQL reads its password through
+`POSTGRES_PASSWORD_FILE`, while Spring Boot imports its mounted files as a
 configuration tree.
 
 For a direct host run, `APP_SECRETS_DIRECTORY` is loaded from the root `.env`.
-Keep the four filenames exactly as shown above. On a managed deployment, the
-same files can be materialized by the platform's secret manager instead of
+Keep the six filenames exactly as shown above. The Alertmanager URL must point
+to a receiver that accepts Alertmanager webhook JSON. On a managed deployment,
+the same files can be materialized by the platform's secret manager instead of
 being created manually.
 
 ## Database migrations
@@ -245,6 +252,38 @@ curl -I "https://${PUBLIC_DOMAIN}/healthz"
 curl -I "https://${PUBLIC_DOMAIN}/projects/example"
 curl -I "https://${ADMIN_DOMAIN}/login"
 ```
+
+## Observability
+
+The backend exposes internal-only Actuator endpoints:
+
+```text
+/actuator/health/liveness
+/actuator/health/readiness
+/actuator/prometheus
+```
+
+Readiness includes the PostgreSQL health indicator; liveness intentionally does
+not depend on external services. Docker uses readiness for backend health, and
+Prometheus records request rate, HTTP 5xx ratio, response-time histograms, and
+p95 latency. Blackbox Exporter checks the configured public and admin HTTPS
+URLs end to end.
+
+Backend logs and proxy access logs are written as JSON to stdout. Alloy
+discovers the Compose containers and sends all stdout/stderr logs to Loki.
+Grafana is provisioned with Prometheus and Loki datasources plus the
+`Personal website overview` dashboard. Grafana, Prometheus, and Alertmanager
+bind to `127.0.0.1` by default.
+
+Set the Sentry variables from `.env.example` to enable backend and browser error
+reporting. Blank DSNs leave each SDK disabled. Because Vite variables are
+embedded at build time, rebuild the frontend images after changing a frontend
+DSN or release.
+
+Alertmanager sends both firing and resolved notifications to the URL stored in
+`ALERTMANAGER_WEBHOOK_URL`. The complete setup, validation commands, alert
+thresholds, log queries, and incident procedures are in
+[docs/observability-runbook.md](docs/observability-runbook.md).
 
 To access PostgreSQL for maintenance, execute the client inside the database
 container instead of publishing port 5432:

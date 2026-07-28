@@ -1,0 +1,167 @@
+groups:
+  - name: application-recording
+    interval: 30s
+    rules:
+      - record: job:http_requests:rate5m
+        expr: >-
+          sum(
+            rate(
+              http_server_requests_seconds_count{
+                job="backend",
+                uri!~"/actuator.*"
+              }[5m]
+            )
+          )
+
+      - record: job:http_server_errors:rate5m
+        expr: >-
+          sum(
+            rate(
+              http_server_requests_seconds_count{
+                job="backend",
+                status=~"5..",
+                uri!~"/actuator.*"
+              }[5m]
+            )
+          )
+
+      - record: job:http_server_error_ratio:rate5m
+        expr: >-
+          job:http_server_errors:rate5m
+          /
+          clamp_min(job:http_requests:rate5m, 0.001)
+
+      - record: job:http_request_duration_seconds:p95_5m
+        expr: >-
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(
+                http_server_requests_seconds_bucket{
+                  job="backend",
+                  uri!~"/actuator.*"
+                }[5m]
+              )
+            )
+          )
+
+  - name: application-alerts
+    rules:
+      - alert: PublicSiteUnavailable
+        expr: >-
+          probe_success{job="blackbox-sites"} == 0
+          or
+          up{job="blackbox-sites"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Site {{ $labels.site }} is unavailable"
+          description: "Blackbox checks of {{ $labels.instance }} have failed for more than two minutes."
+          runbook: "docs/observability-runbook.md#site-or-backend-is-unavailable"
+
+      - alert: PublicSiteSlow
+        expr: probe_duration_seconds{job="blackbox-sites"} > 3
+        for: 10m
+        labels:
+          severity: warning
+          category: latency
+        annotations:
+          summary: "Site {{ $labels.site }} is responding slowly"
+          description: "The end-to-end probe of {{ $labels.instance }} has exceeded 3 seconds for ten minutes."
+          runbook: "docs/observability-runbook.md#latency-or-error-rate-is-high"
+
+      - alert: BackendMetricsUnavailable
+        expr: up{job="backend"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+          service: backend
+        annotations:
+          summary: "Backend metrics endpoint is unavailable"
+          description: "Prometheus cannot scrape the backend Actuator endpoint on {{ $labels.instance }}."
+          runbook: "docs/observability-runbook.md#site-or-backend-is-unavailable"
+
+      - alert: BackendLivenessFailed
+        expr: >-
+          probe_success{job="backend-health", check="liveness"} == 0
+          or
+          up{job="backend-health", check="liveness"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Backend liveness check failed"
+          description: "The backend liveness endpoint has failed for one minute."
+          runbook: "docs/observability-runbook.md#site-or-backend-is-unavailable"
+
+      - alert: BackendReadinessFailed
+        expr: >-
+          probe_success{job="backend-health", check="readiness"} == 0
+          or
+          up{job="backend-health", check="readiness"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Backend readiness check failed"
+          description: "The backend readiness endpoint has failed. PostgreSQL availability is part of this check."
+          runbook: "docs/observability-runbook.md#site-or-backend-is-unavailable"
+
+      - alert: BackendHighErrorRate
+        expr: >-
+          job:http_server_error_ratio:rate5m > 0.05
+          and
+          job:http_requests:rate5m > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          category: errors
+          service: backend
+        annotations:
+          summary: "Backend HTTP 5xx ratio is above 5%"
+          description: "More than 5% of non-Actuator backend requests have returned 5xx for ten minutes."
+          runbook: "docs/observability-runbook.md#latency-or-error-rate-is-high"
+
+      - alert: BackendHighP95Latency
+        expr: >-
+          job:http_request_duration_seconds:p95_5m > 1
+          and
+          job:http_requests:rate5m > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          category: latency
+          service: backend
+        annotations:
+          summary: "Backend p95 latency is above one second"
+          description: "The p95 duration of non-Actuator backend requests has exceeded one second for ten minutes."
+          runbook: "docs/observability-runbook.md#latency-or-error-rate-is-high"
+
+  - name: observability-alerts
+    rules:
+      - alert: ObservabilityTargetDown
+        expr: up{job=~"alertmanager|blackbox-exporter|loki|alloy|grafana"} == 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Observability target {{ $labels.job }} is down"
+          description: "Prometheus has failed to scrape {{ $labels.instance }} for five minutes."
+          runbook: "docs/observability-runbook.md#observability-component-is-down"
+
+      - alert: PrometheusRuleEvaluationFailures
+        expr: increase(prometheus_rule_evaluation_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: observability
+        annotations:
+          summary: "Prometheus rule evaluation is failing"
+          description: "At least one Prometheus rule evaluation has failed during the last five minutes."
+          runbook: "docs/observability-runbook.md#observability-component-is-down"

@@ -42,6 +42,24 @@ class ProductionProfileConfigurationTests {
                             .isEqualTo("false");
                     assertThat(context.getEnvironment().getProperty("app.security.require-https"))
                             .isEqualTo("true");
+                    assertThat(context.getEnvironment().getProperty(
+                            "management.endpoint.health.group.liveness.include"
+                    )).isEqualTo("livenessState");
+                    assertThat(context.getEnvironment().getProperty(
+                            "management.endpoint.health.group.readiness.include"
+                    )).isEqualTo("readinessState,db");
+                    assertThat(context.getEnvironment().getProperty(
+                            "management.endpoints.web.exposure.include"
+                    )).isEqualTo("health,prometheus");
+                    assertThat(context.getEnvironment().getProperty(
+                            "management.prometheus.metrics.export.enabled"
+                    )).isEqualTo("true");
+                    assertThat(context.getEnvironment().getProperty(
+                            "logging.structured.format.console"
+                    )).isEqualTo("logstash");
+                    assertThat(context.getEnvironment().getProperty("sentry.enabled"))
+                            .isEqualTo("true");
+                    assertThat(context.getEnvironment().getProperty("sentry.dsn")).isEmpty();
                 });
     }
 }

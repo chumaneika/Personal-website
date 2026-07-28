@@ -1,0 +1,41 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: webhook
+  group_by:
+    - alertname
+    - category
+    - service
+    - site
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - receiver: webhook
+      matchers:
+        - severity="critical"
+      repeat_interval: 30m
+
+receivers:
+  - name: webhook
+    webhook_configs:
+      - url_file: /run/secrets/ALERTMANAGER_WEBHOOK_URL
+        send_resolved: true
+        max_alerts: 20
+        timeout: 10s
+
+inhibit_rules:
+  - source_matchers:
+      - alertname="PublicSiteUnavailable"
+    target_matchers:
+      - alertname="PublicSiteSlow"
+    equal:
+      - site
+      - service
+  - source_matchers:
+      - alertname=~"BackendMetricsUnavailable|BackendLivenessFailed|BackendReadinessFailed"
+    target_matchers:
+      - alertname=~"BackendHighErrorRate|BackendHighP95Latency"
+    equal:
+      - service
