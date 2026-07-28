@@ -48,7 +48,7 @@ export function LoginForm() {
       </button>
 
       {loginMutation.isError && (
-        <p className="form-error">
+        <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
           {getApiErrorMessage(
             loginMutation.error,
             'Could not sign in. Check the admin email and password.',

@@ -11,6 +11,8 @@ public record ArticleRequest(
         @Size(max = 1000) String summary,
         @NotBlank @Size(max = 100000) String content,
         @Size(max = 512) String coverImageUrl,
+        @Size(max = 512) String coverImageAvifUrl,
+        @Size(max = 512) String coverImageWebpUrl,
         PublicationStatus status
 ) {
 }

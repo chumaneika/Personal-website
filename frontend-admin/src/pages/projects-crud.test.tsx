@@ -76,7 +76,9 @@ describe('project CRUD', () => {
         }),
       ),
     );
-    expect(await screen.findByText('Project changes saved.')).toBeInTheDocument();
+    const saveStatus = await screen.findByRole('status');
+    expect(saveStatus).toHaveAttribute('aria-live', 'polite');
+    expect(saveStatus).toHaveTextContent('Project changes saved.');
   });
 
   it('lists, publishes, and deletes a project after confirmation', async () => {

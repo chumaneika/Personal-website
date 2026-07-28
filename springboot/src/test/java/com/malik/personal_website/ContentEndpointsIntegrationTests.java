@@ -273,6 +273,9 @@ class ContentEndpointsIntegrationTests {
                   "slug": "spring-transactions",
                   "summary": "Transaction boundaries explained",
                   "content": "Article body",
+                  "coverImageUrl": "https://cdn.example/article.jpg",
+                  "coverImageAvifUrl": "https://cdn.example/article.avif",
+                  "coverImageWebpUrl": "https://cdn.example/article.webp",
                   "status": "DRAFT"
                 }
                 """;
@@ -282,6 +285,8 @@ class ContentEndpointsIntegrationTests {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(draftPayload))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.coverImageAvifUrl").value("https://cdn.example/article.avif"))
+                .andExpect(jsonPath("$.coverImageWebpUrl").value("https://cdn.example/article.webp"))
                 .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andReturn();
         long articleId = responseId(created);
@@ -306,6 +311,9 @@ class ContentEndpointsIntegrationTests {
                                   "slug": "spring-transactions",
                                   "summary": "Updated summary",
                                   "content": "Updated article body",
+                                  "coverImageUrl": "https://cdn.example/article.jpg",
+                                  "coverImageAvifUrl": "https://cdn.example/article.avif",
+                                  "coverImageWebpUrl": "https://cdn.example/article.webp",
                                   "status": "DRAFT"
                                 }
                                 """))
@@ -331,7 +339,9 @@ class ContentEndpointsIntegrationTests {
                 .andExpect(jsonPath("$[0].slug").value("spring-transactions"));
         mockMvc.perform(get("/api/articles/spring-transactions"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").value("Updated article body"));
+                .andExpect(jsonPath("$.content").value("Updated article body"))
+                .andExpect(jsonPath("$.coverImageAvifUrl").value("https://cdn.example/article.avif"))
+                .andExpect(jsonPath("$.coverImageWebpUrl").value("https://cdn.example/article.webp"));
 
         mockMvc.perform(post("/api/admin/articles")
                         .session(adminSession)

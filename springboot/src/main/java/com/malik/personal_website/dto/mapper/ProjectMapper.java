@@ -22,6 +22,8 @@ public class ProjectMapper {
                 project.getGithubUrl(),
                 project.getDemoUrl(),
                 project.getCoverImageUrl(),
+                project.getCoverImageAvifUrl(),
+                project.getCoverImageWebpUrl(),
                 project.getStatus(),
                 project.getStartedAt(),
                 project.getCompletedAt(),
@@ -40,6 +42,8 @@ public class ProjectMapper {
                 project.getGithubUrl(),
                 project.getDemoUrl(),
                 project.getCoverImageUrl(),
+                project.getCoverImageAvifUrl(),
+                project.getCoverImageWebpUrl(),
                 project.getStartedAt(),
                 project.getCompletedAt()
         );

@@ -8,6 +8,7 @@ import { ProjectGrid } from '../features/project-list/ProjectGrid';
 import { SkillGroups } from '../features/skills/SkillGroups';
 import { loadArticles, loadHome } from '../shared/api/publicApi.server';
 import { PageState } from '../shared/components/PageState';
+import { OptimizedImage } from '../shared/components/OptimizedImage';
 import { SeoMetadata } from '../shared/components/SeoMetadata';
 import { SocialLinks } from '../shared/components/SocialLinks';
 import { StructuredData } from '../shared/components/StructuredData';
@@ -94,7 +95,18 @@ export function HomePage({ loaderData }: { loaderData: Route.ComponentProps['loa
 
         <div className="hero-section__media" aria-label="Profile">
           {profile?.avatarUrl ? (
-            <img src={profile.avatarUrl} alt={`${getProfileName(profile)} avatar`} />
+            <OptimizedImage
+              src={profile.avatarUrl}
+              avifSrc={profile.avatarAvifUrl}
+              webpSrc={profile.avatarWebpUrl}
+              pictureClassName="hero-section__picture"
+              alt={`${getProfileName(profile)} avatar`}
+              width={800}
+              height={800}
+              loading="eager"
+              decoding="async"
+              fetchPriority="high"
+            />
           ) : (
             <div className="avatar-fallback">{getInitials(profile)}</div>
           )}

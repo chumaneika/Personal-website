@@ -135,7 +135,7 @@ export function SkillCategoryFormPage() {
           </div>
 
           {saveMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(saveMutation.error, 'Could not save skill category.')}
             </p>
           )}

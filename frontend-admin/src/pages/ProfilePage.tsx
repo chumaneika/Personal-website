@@ -48,6 +48,8 @@ const profileSchema = z.object({
   githubUrl: optionalUrl,
   linkedinUrl: optionalUrl,
   avatarUrl: optionalUrl,
+  avatarAvifUrl: optionalUrl,
+  avatarWebpUrl: optionalUrl,
   resumeUrl: optionalUrl,
 });
 
@@ -65,6 +67,8 @@ const emptyProfileValues: ProfileFormValues = {
   githubUrl: '',
   linkedinUrl: '',
   avatarUrl: '',
+  avatarAvifUrl: '',
+  avatarWebpUrl: '',
   resumeUrl: '',
 };
 
@@ -85,6 +89,8 @@ function getProfileValues(profile: ProfileResponse | null): ProfileFormValues {
     githubUrl: profile.githubUrl ?? '',
     linkedinUrl: profile.linkedinUrl ?? '',
     avatarUrl: profile.avatarUrl ?? '',
+    avatarAvifUrl: profile.avatarAvifUrl ?? '',
+    avatarWebpUrl: profile.avatarWebpUrl ?? '',
     resumeUrl: profile.resumeUrl ?? '',
   };
 }
@@ -102,6 +108,8 @@ function toProfileRequest(values: ProfileFormValues): ProfileRequest {
     githubUrl: nullableText(values.githubUrl),
     linkedinUrl: nullableText(values.linkedinUrl),
     avatarUrl: nullableText(values.avatarUrl),
+    avatarAvifUrl: nullableText(values.avatarAvifUrl),
+    avatarWebpUrl: nullableText(values.avatarWebpUrl),
     resumeUrl: nullableText(values.resumeUrl),
   };
 }
@@ -235,10 +243,24 @@ export function ProfilePage() {
               )}
             </label>
             <label>
-              Avatar URL
+              Avatar fallback URL
               <input type="url" {...form.register('avatarUrl')} />
               {form.formState.errors.avatarUrl && (
                 <span>{form.formState.errors.avatarUrl.message}</span>
+              )}
+            </label>
+            <label>
+              Avatar AVIF URL
+              <input type="url" {...form.register('avatarAvifUrl')} />
+              {form.formState.errors.avatarAvifUrl && (
+                <span>{form.formState.errors.avatarAvifUrl.message}</span>
+              )}
+            </label>
+            <label>
+              Avatar WebP URL
+              <input type="url" {...form.register('avatarWebpUrl')} />
+              {form.formState.errors.avatarWebpUrl && (
+                <span>{form.formState.errors.avatarWebpUrl.message}</span>
               )}
             </label>
             <label>
@@ -263,9 +285,13 @@ export function ProfilePage() {
             </button>
           </div>
 
-          {saveMutation.isSuccess && <p className="form-note">Profile saved.</p>}
+          {saveMutation.isSuccess && (
+            <p className="form-note" role="status" aria-live="polite" aria-atomic="true">
+              Profile saved.
+            </p>
+          )}
           {saveMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(saveMutation.error, 'Could not save profile.')}
             </p>
           )}

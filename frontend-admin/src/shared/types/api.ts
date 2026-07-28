@@ -42,6 +42,8 @@ export type ProfileResponse = {
   githubUrl: string | null;
   linkedinUrl: string | null;
   avatarUrl: string | null;
+  avatarAvifUrl: string | null;
+  avatarWebpUrl: string | null;
   resumeUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -59,6 +61,8 @@ export type ProfileRequest = {
   githubUrl?: string | null;
   linkedinUrl?: string | null;
   avatarUrl?: string | null;
+  avatarAvifUrl?: string | null;
+  avatarWebpUrl?: string | null;
   resumeUrl?: string | null;
 };
 
@@ -74,6 +78,8 @@ export type ProjectResponse = {
   githubUrl: string | null;
   demoUrl: string | null;
   coverImageUrl: string | null;
+  coverImageAvifUrl: string | null;
+  coverImageWebpUrl: string | null;
   status: PublicationStatus;
   startedAt: string | null;
   completedAt: string | null;
@@ -92,6 +98,8 @@ export type ProjectRequest = {
   githubUrl?: string | null;
   demoUrl?: string | null;
   coverImageUrl?: string | null;
+  coverImageAvifUrl?: string | null;
+  coverImageWebpUrl?: string | null;
   status?: PublicationStatus;
   startedAt?: string | null;
   completedAt?: string | null;
@@ -104,6 +112,8 @@ export type ArticleResponse = {
   summary: string | null;
   content: string;
   coverImageUrl: string | null;
+  coverImageAvifUrl: string | null;
+  coverImageWebpUrl: string | null;
   status: PublicationStatus;
   createdAt: string;
   updatedAt: string;
@@ -115,6 +125,8 @@ export type ArticleRequest = {
   summary?: string | null;
   content: string;
   coverImageUrl?: string | null;
+  coverImageAvifUrl?: string | null;
+  coverImageWebpUrl?: string | null;
   status?: PublicationStatus;
 };
 

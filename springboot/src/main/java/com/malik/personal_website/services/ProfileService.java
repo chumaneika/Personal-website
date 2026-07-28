@@ -47,6 +47,8 @@ public class ProfileService {
         profile.setGithubUrl(request.githubUrl());
         profile.setLinkedinUrl(request.linkedinUrl());
         profile.setAvatarUrl(request.avatarUrl());
+        profile.setAvatarAvifUrl(request.avatarAvifUrl());
+        profile.setAvatarWebpUrl(request.avatarWebpUrl());
         profile.setResumeUrl(request.resumeUrl());
     }
 }

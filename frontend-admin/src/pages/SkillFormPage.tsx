@@ -222,9 +222,13 @@ export function SkillFormPage() {
             </button>
           </div>
 
-          {saveMutation.isSuccess && <p className="form-note">Skill saved.</p>}
+          {saveMutation.isSuccess && (
+            <p className="form-note" role="status" aria-live="polite" aria-atomic="true">
+              Skill saved.
+            </p>
+          )}
           {saveMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(saveMutation.error, 'Could not save skill.')}
             </p>
           )}

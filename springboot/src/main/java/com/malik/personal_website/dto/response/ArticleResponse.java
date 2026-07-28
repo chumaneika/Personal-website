@@ -10,6 +10,8 @@ public record ArticleResponse(
         String summary,
         String content,
         String coverImageUrl,
+        String coverImageAvifUrl,
+        String coverImageWebpUrl,
         PublicationStatus status,
         Instant createdAt,
         Instant updatedAt

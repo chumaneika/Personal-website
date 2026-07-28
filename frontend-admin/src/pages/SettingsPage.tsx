@@ -88,7 +88,7 @@ export function SettingsPage() {
           </div>
           {healthQuery.isPending && <p className="muted-text">Checking backend...</p>}
           {healthQuery.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(healthQuery.error, 'Health check failed.')}
             </p>
           )}
@@ -103,7 +103,7 @@ export function SettingsPage() {
           </div>
           {adminQuery.isPending && <p className="muted-text">Loading admin session...</p>}
           {adminQuery.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(adminQuery.error, 'Could not load admin session.')}
             </p>
           )}
@@ -166,7 +166,7 @@ export function SettingsPage() {
               Use 12–128 characters with at least one letter and one number.
             </p>
             {passwordMutation.isError && (
-              <p className="form-error">
+              <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
                 {getApiErrorMessage(passwordMutation.error, 'Could not change the password.')}
               </p>
             )}
@@ -186,7 +186,7 @@ export function SettingsPage() {
             {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
           </button>
           {logoutMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(logoutMutation.error, 'Could not log out.')}
             </p>
           )}

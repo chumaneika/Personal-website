@@ -1,19 +1,7 @@
-import { useState, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
 import { isRouteErrorResponse, Links, Outlet, Scripts, ScrollRestoration } from 'react-router';
 import type { Route } from './+types/root';
 import './styles/main.scss';
-
-function createQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: 1,
-        refetchOnWindowFocus: false,
-      },
-    },
-  });
-}
 
 export function Layout({ children }: { children: ReactNode }) {
   return (
@@ -34,13 +22,7 @@ export function Layout({ children }: { children: ReactNode }) {
 }
 
 export default function Root() {
-  const [queryClient] = useState(createQueryClient);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Outlet />
-    </QueryClientProvider>
-  );
+  return <Outlet />;
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

@@ -1,10 +1,13 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { sendContactMessage } from '../../shared/api/contact';
 import { type ContactFormValues, contactSchema } from './contactSchema';
 
+type SubmissionStatus = 'idle' | 'pending' | 'success' | 'error';
+
 export function ContactForm() {
+  const [submissionStatus, setSubmissionStatus] = useState<SubmissionStatus>('idle');
   const form = useForm<ContactFormValues>({
     resolver: zodResolver(contactSchema),
     defaultValues: {
@@ -15,15 +18,16 @@ export function ContactForm() {
     },
   });
 
-  const contactMutation = useMutation({
-    mutationFn: sendContactMessage,
-    onSuccess: () => {
-      form.reset();
-    },
-  });
+  const onSubmit = form.handleSubmit(async (values) => {
+    setSubmissionStatus('pending');
 
-  const onSubmit = form.handleSubmit((values) => {
-    contactMutation.mutate(values);
+    try {
+      await sendContactMessage(values);
+      form.reset();
+      setSubmissionStatus('success');
+    } catch {
+      setSubmissionStatus('error');
+    }
   });
 
   return (
@@ -55,13 +59,19 @@ export function ContactForm() {
         {form.formState.errors.message && <span>{form.formState.errors.message.message}</span>}
       </label>
 
-      <button type="submit" disabled={contactMutation.isPending}>
-        {contactMutation.isPending ? 'Sending...' : 'Send message'}
+      <button type="submit" disabled={submissionStatus === 'pending'}>
+        {submissionStatus === 'pending' ? 'Sending...' : 'Send message'}
       </button>
 
-      {contactMutation.isSuccess && <p className="form-note">Message sent. Thank you.</p>}
-      {contactMutation.isError && (
-        <p className="form-error">Could not send the message. Please try again.</p>
+      {submissionStatus === 'success' && (
+        <p className="form-note" role="status" aria-live="polite" aria-atomic="true">
+          Message sent. Thank you.
+        </p>
+      )}
+      {submissionStatus === 'error' && (
+        <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
+          Could not send the message. Please try again.
+        </p>
       )}
     </form>
   );

@@ -11,7 +11,9 @@ export function LoginPage() {
         <h1>Sign in</h1>
       </section>
       {searchParams.get('passwordChanged') === '1' && (
-        <p className="form-note">Password changed. Sign in with the new password.</p>
+        <p className="form-note" role="status" aria-live="polite" aria-atomic="true">
+          Password changed. Sign in with the new password.
+        </p>
       )}
       <LoginForm />
     </main>

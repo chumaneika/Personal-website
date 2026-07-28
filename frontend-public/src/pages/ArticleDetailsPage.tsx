@@ -6,6 +6,7 @@ import { getArticleStructuredData } from '../app/structuredData';
 import { loadArticle, PublicApiError } from '../shared/api/publicApi.server';
 import { PageState } from '../shared/components/PageState';
 import { Prose } from '../shared/components/Prose';
+import { OptimizedImage } from '../shared/components/OptimizedImage';
 import { SeoMetadata } from '../shared/components/SeoMetadata';
 import { StructuredData } from '../shared/components/StructuredData';
 import { getPublicSiteOrigin } from '../shared/config/runtime.server';
@@ -119,7 +120,19 @@ export function ArticleDetailsPage({
       </header>
 
       {article.coverImageUrl && (
-        <img className="project-detail__cover" src={article.coverImageUrl} alt="" />
+        <OptimizedImage
+          className="project-detail__cover"
+          src={article.coverImageUrl}
+          avifSrc={article.coverImageAvifUrl}
+          webpSrc={article.coverImageWebpUrl}
+          pictureClassName="project-detail__picture"
+          alt=""
+          width={1600}
+          height={900}
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
       )}
 
       <section className="content-section article-detail__content">

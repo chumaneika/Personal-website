@@ -21,6 +21,8 @@ public class ProfileMapper {
                 profile.getGithubUrl(),
                 profile.getLinkedinUrl(),
                 profile.getAvatarUrl(),
+                profile.getAvatarAvifUrl(),
+                profile.getAvatarWebpUrl(),
                 profile.getResumeUrl(),
                 profile.getCreatedAt(),
                 profile.getUpdatedAt()

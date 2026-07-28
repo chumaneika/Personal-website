@@ -113,6 +113,8 @@ class AdminCrudIntegrationTests {
                         )))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.slug").value("payments-api"))
+                .andExpect(jsonPath("$.coverImageAvifUrl").value("https://cdn.example/project.avif"))
+                .andExpect(jsonPath("$.coverImageWebpUrl").value("https://cdn.example/project.webp"))
                 .andExpect(jsonPath("$.status").value("DRAFT"))
                 .andReturn();
         long projectId = responseId(created);
@@ -184,6 +186,8 @@ class AdminCrudIntegrationTests {
                         )))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.firstName").value("Malik"))
+                .andExpect(jsonPath("$.avatarAvifUrl").value("https://cdn.example/avatar.avif"))
+                .andExpect(jsonPath("$.avatarWebpUrl").value("https://cdn.example/avatar.webp"))
                 .andExpect(jsonPath("$.location").value("Moscow"));
         mockMvc.perform(get("/api/profile"))
                 .andExpect(status().isOk())
@@ -396,6 +400,9 @@ class AdminCrudIntegrationTests {
                   "shortDescription": "Short description",
                   "fullDescription": "Full description",
                   "technologyStack": "Java, Spring Boot",
+                  "coverImageUrl": "https://cdn.example/project.jpg",
+                  "coverImageAvifUrl": "https://cdn.example/project.avif",
+                  "coverImageWebpUrl": "https://cdn.example/project.webp",
                   "status": "%s",
                   "startedAt": %s,
                   "completedAt": %s
@@ -418,7 +425,10 @@ class AdminCrudIntegrationTests {
                   "shortBio": "Backend engineer",
                   "location": "%s",
                   "email": "malik@example.com",
-                  "githubUrl": "https://github.com/example"
+                  "githubUrl": "https://github.com/example",
+                  "avatarUrl": "https://cdn.example/avatar.jpg",
+                  "avatarAvifUrl": "https://cdn.example/avatar.avif",
+                  "avatarWebpUrl": "https://cdn.example/avatar.webp"
                 }
                 """.formatted(firstName, lastName, headline, location);
     }

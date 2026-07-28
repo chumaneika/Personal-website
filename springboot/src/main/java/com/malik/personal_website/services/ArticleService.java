@@ -81,6 +81,8 @@ public class ArticleService {
         article.setSummary(request.summary());
         article.setContent(request.content());
         article.setCoverImageUrl(request.coverImageUrl());
+        article.setCoverImageAvifUrl(request.coverImageAvifUrl());
+        article.setCoverImageWebpUrl(request.coverImageWebpUrl());
         article.setStatus(request.status() == null ? PublicationStatus.DRAFT : request.status());
     }
 

@@ -101,7 +101,7 @@ export function MessageDetailPage() {
           </div>
 
           {statusMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(statusMutation.error, 'Could not update message status.')}
             </p>
           )}

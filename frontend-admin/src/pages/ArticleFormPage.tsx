@@ -45,6 +45,8 @@ const articleSchema = z.object({
     .min(1, 'Content is required.')
     .max(100000, 'Use 100000 characters or fewer.'),
   coverImageUrl: optionalUrl,
+  coverImageAvifUrl: optionalUrl,
+  coverImageWebpUrl: optionalUrl,
   status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
 });
 
@@ -56,6 +58,8 @@ const emptyArticleValues: ArticleFormValues = {
   summary: '',
   content: '',
   coverImageUrl: '',
+  coverImageAvifUrl: '',
+  coverImageWebpUrl: '',
   status: 'DRAFT',
 };
 
@@ -66,6 +70,8 @@ function getArticleValues(article: ArticleResponse): ArticleFormValues {
     summary: article.summary ?? '',
     content: article.content,
     coverImageUrl: article.coverImageUrl ?? '',
+    coverImageAvifUrl: article.coverImageAvifUrl ?? '',
+    coverImageWebpUrl: article.coverImageWebpUrl ?? '',
     status: article.status,
   };
 }
@@ -77,6 +83,8 @@ function toArticleRequest(values: ArticleFormValues): ArticleRequest {
     summary: nullableText(values.summary),
     content: values.content.trim(),
     coverImageUrl: nullableText(values.coverImageUrl),
+    coverImageAvifUrl: nullableText(values.coverImageAvifUrl),
+    coverImageWebpUrl: nullableText(values.coverImageWebpUrl),
     status: values.status,
   };
 }
@@ -220,7 +228,7 @@ export function ArticleFormPage() {
             ))}
           </div>
           {statusMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(statusMutation.error, 'Could not update status.')}
             </p>
           )}
@@ -252,7 +260,7 @@ export function ArticleFormPage() {
               {form.formState.errors.status && <span>{form.formState.errors.status.message}</span>}
             </label>
             <label>
-              Cover image URL (optional)
+              Cover fallback URL (optional)
               <input
                 type="url"
                 placeholder="https://example.com/cover.jpg"
@@ -260,6 +268,28 @@ export function ArticleFormPage() {
               />
               {form.formState.errors.coverImageUrl && (
                 <span>{form.formState.errors.coverImageUrl.message}</span>
+              )}
+            </label>
+            <label>
+              Cover AVIF URL (optional)
+              <input
+                type="url"
+                placeholder="https://example.com/cover.avif"
+                {...form.register('coverImageAvifUrl')}
+              />
+              {form.formState.errors.coverImageAvifUrl && (
+                <span>{form.formState.errors.coverImageAvifUrl.message}</span>
+              )}
+            </label>
+            <label>
+              Cover WebP URL (optional)
+              <input
+                type="url"
+                placeholder="https://example.com/cover.webp"
+                {...form.register('coverImageWebpUrl')}
+              />
+              {form.formState.errors.coverImageWebpUrl && (
+                <span>{form.formState.errors.coverImageWebpUrl.message}</span>
               )}
             </label>
           </div>
@@ -282,9 +312,13 @@ export function ArticleFormPage() {
             </button>
           </div>
 
-          {saveMutation.isSuccess && <p className="form-note">Article saved.</p>}
+          {saveMutation.isSuccess && (
+            <p className="form-note" role="status" aria-live="polite" aria-atomic="true">
+              Article saved.
+            </p>
+          )}
           {saveMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(saveMutation.error, 'Could not save article.')}
             </p>
           )}

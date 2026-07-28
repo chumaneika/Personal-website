@@ -47,6 +47,8 @@ const projectSchema = z
     githubUrl: optionalUrl,
     demoUrl: optionalUrl,
     coverImageUrl: optionalUrl,
+    coverImageAvifUrl: optionalUrl,
+    coverImageWebpUrl: optionalUrl,
     status: z.enum(['DRAFT', 'PUBLISHED', 'ARCHIVED']),
     startedAt: z.string(),
     completedAt: z.string(),
@@ -72,6 +74,8 @@ const emptyProjectValues: ProjectFormValues = {
   githubUrl: '',
   demoUrl: '',
   coverImageUrl: '',
+  coverImageAvifUrl: '',
+  coverImageWebpUrl: '',
   status: 'DRAFT',
   startedAt: '',
   completedAt: '',
@@ -93,6 +97,8 @@ function getProjectValues(project: ProjectResponse): ProjectFormValues {
     githubUrl: project.githubUrl ?? '',
     demoUrl: project.demoUrl ?? '',
     coverImageUrl: project.coverImageUrl ?? '',
+    coverImageAvifUrl: project.coverImageAvifUrl ?? '',
+    coverImageWebpUrl: project.coverImageWebpUrl ?? '',
     status: project.status,
     startedAt: dateInputValue(project.startedAt),
     completedAt: dateInputValue(project.completedAt),
@@ -111,6 +117,8 @@ function toProjectRequest(values: ProjectFormValues): ProjectRequest {
     githubUrl: nullableText(values.githubUrl),
     demoUrl: nullableText(values.demoUrl),
     coverImageUrl: nullableText(values.coverImageUrl),
+    coverImageAvifUrl: nullableText(values.coverImageAvifUrl),
+    coverImageWebpUrl: nullableText(values.coverImageWebpUrl),
     status: values.status,
     startedAt: nullableText(values.startedAt),
     completedAt: nullableText(values.completedAt),
@@ -263,7 +271,7 @@ export function ProjectFormPage() {
             ))}
           </div>
           {statusMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(statusMutation.error, 'Could not update status.')}
             </p>
           )}
@@ -353,10 +361,24 @@ export function ProjectFormPage() {
               )}
             </label>
             <label>
-              Cover image URL
+              Cover fallback URL
               <input type="url" {...form.register('coverImageUrl')} />
               {form.formState.errors.coverImageUrl && (
                 <span>{form.formState.errors.coverImageUrl.message}</span>
+              )}
+            </label>
+            <label>
+              Cover AVIF URL
+              <input type="url" {...form.register('coverImageAvifUrl')} />
+              {form.formState.errors.coverImageAvifUrl && (
+                <span>{form.formState.errors.coverImageAvifUrl.message}</span>
+              )}
+            </label>
+            <label>
+              Cover WebP URL
+              <input type="url" {...form.register('coverImageWebpUrl')} />
+              {form.formState.errors.coverImageWebpUrl && (
+                <span>{form.formState.errors.coverImageWebpUrl.message}</span>
               )}
             </label>
             <label>
@@ -381,9 +403,13 @@ export function ProjectFormPage() {
             </button>
           </div>
 
-          {saveMutation.isSuccess && <p className="form-note">Project changes saved.</p>}
+          {saveMutation.isSuccess && (
+            <p className="form-note" role="status" aria-live="polite" aria-atomic="true">
+              Project changes saved.
+            </p>
+          )}
           {saveMutation.isError && (
-            <p className="form-error">
+            <p className="form-error" role="alert" aria-live="assertive" aria-atomic="true">
               {getApiErrorMessage(saveMutation.error, 'Could not save project.')}
             </p>
           )}

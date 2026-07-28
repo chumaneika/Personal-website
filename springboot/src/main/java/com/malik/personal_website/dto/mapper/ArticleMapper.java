@@ -17,6 +17,8 @@ public class ArticleMapper {
                 article.getSummary(),
                 article.getContent(),
                 article.getCoverImageUrl(),
+                article.getCoverImageAvifUrl(),
+                article.getCoverImageWebpUrl(),
                 article.getStatus(),
                 article.getCreatedAt(),
                 article.getUpdatedAt()
@@ -30,6 +32,8 @@ public class ArticleMapper {
                 article.getSlug(),
                 article.getSummary(),
                 article.getCoverImageUrl(),
+                article.getCoverImageAvifUrl(),
+                article.getCoverImageWebpUrl(),
                 article.getCreatedAt(),
                 article.getUpdatedAt()
         );

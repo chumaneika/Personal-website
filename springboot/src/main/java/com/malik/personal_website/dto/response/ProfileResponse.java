@@ -15,6 +15,8 @@ public record ProfileResponse(
         String githubUrl,
         String linkedinUrl,
         String avatarUrl,
+        String avatarAvifUrl,
+        String avatarWebpUrl,
         String resumeUrl,
         Instant createdAt,
         Instant updatedAt

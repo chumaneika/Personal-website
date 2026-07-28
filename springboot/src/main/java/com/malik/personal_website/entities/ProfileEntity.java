@@ -45,6 +45,12 @@ public class ProfileEntity extends BaseEntity {
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 
+    @Column(name = "avatar_avif_url", length = 512)
+    private String avatarAvifUrl;
+
+    @Column(name = "avatar_webp_url", length = 512)
+    private String avatarWebpUrl;
+
     @Column(name = "resume_url", length = 512)
     private String resumeUrl;
 
@@ -90,6 +96,14 @@ public class ProfileEntity extends BaseEntity {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = normalizeOptionalText(avatarUrl, "avatarUrl", 512);
+    }
+
+    public void setAvatarAvifUrl(String avatarAvifUrl) {
+        this.avatarAvifUrl = normalizeOptionalText(avatarAvifUrl, "avatarAvifUrl", 512);
+    }
+
+    public void setAvatarWebpUrl(String avatarWebpUrl) {
+        this.avatarWebpUrl = normalizeOptionalText(avatarWebpUrl, "avatarWebpUrl", 512);
     }
 
     public void setResumeUrl(String resumeUrl) {

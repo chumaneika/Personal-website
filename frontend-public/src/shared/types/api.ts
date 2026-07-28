@@ -23,6 +23,8 @@ export type ProfileResponse = {
   githubUrl: string | null;
   linkedinUrl: string | null;
   avatarUrl: string | null;
+  avatarAvifUrl: string | null;
+  avatarWebpUrl: string | null;
   resumeUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -37,6 +39,8 @@ export type ProjectSummaryResponse = {
   githubUrl: string | null;
   demoUrl: string | null;
   coverImageUrl: string | null;
+  coverImageAvifUrl: string | null;
+  coverImageWebpUrl: string | null;
   startedAt: string | null;
   completedAt: string | null;
 };
@@ -56,6 +60,8 @@ export type ArticleSummaryResponse = {
   slug: string;
   summary: string | null;
   coverImageUrl: string | null;
+  coverImageAvifUrl: string | null;
+  coverImageWebpUrl: string | null;
   createdAt: string;
   updatedAt: string;
 };

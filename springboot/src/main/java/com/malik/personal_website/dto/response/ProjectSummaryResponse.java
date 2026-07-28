@@ -11,6 +11,8 @@ public record ProjectSummaryResponse(
         String githubUrl,
         String demoUrl,
         String coverImageUrl,
+        String coverImageAvifUrl,
+        String coverImageWebpUrl,
         LocalDate startedAt,
         LocalDate completedAt
 ) {

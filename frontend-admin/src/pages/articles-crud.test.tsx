@@ -43,6 +43,8 @@ describe('article CRUD', () => {
         summary: 'A practical tracing guide.',
         content: 'Start with a correlation identifier.',
         coverImageUrl: null,
+        coverImageAvifUrl: null,
+        coverImageWebpUrl: null,
         status: 'DRAFT',
       }),
     );
@@ -74,7 +76,9 @@ describe('article CRUD', () => {
         expect.objectContaining({ content: 'Updated article content.' }),
       ),
     );
-    expect(await screen.findByText('Article saved.')).toBeInTheDocument();
+    const saveStatus = await screen.findByRole('status');
+    expect(saveStatus).toHaveAttribute('aria-live', 'polite');
+    expect(saveStatus).toHaveTextContent('Article saved.');
   });
 
   it('lists, archives, and deletes an article after confirmation', async () => {

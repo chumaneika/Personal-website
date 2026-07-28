@@ -35,7 +35,9 @@ describe('contact form submission', () => {
         website: '',
       }),
     );
-    expect(await screen.findByText('Message sent. Thank you.')).toBeInTheDocument();
+    const successStatus = await screen.findByRole('status');
+    expect(successStatus).toHaveAttribute('aria-live', 'polite');
+    expect(successStatus).toHaveTextContent('Message sent. Thank you.');
     expect(screen.getByLabelText('Name')).toHaveValue('');
   });
 
@@ -48,9 +50,9 @@ describe('contact form submission', () => {
     await user.type(screen.getByLabelText('Message'), 'Please call me back.');
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
-    expect(
-      await screen.findByText('Could not send the message. Please try again.'),
-    ).toBeInTheDocument();
+    const errorStatus = await screen.findByRole('alert');
+    expect(errorStatus).toHaveAttribute('aria-live', 'assertive');
+    expect(errorStatus).toHaveTextContent('Could not send the message. Please try again.');
     expect(screen.getByLabelText('Message')).toHaveValue('Please call me back.');
   });
 });

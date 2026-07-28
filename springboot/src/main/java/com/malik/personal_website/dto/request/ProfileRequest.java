@@ -16,6 +16,8 @@ public record ProfileRequest(
         @Size(max = 512) String githubUrl,
         @Size(max = 512) String linkedinUrl,
         @Size(max = 512) String avatarUrl,
+        @Size(max = 512) String avatarAvifUrl,
+        @Size(max = 512) String avatarWebpUrl,
         @Size(max = 512) String resumeUrl
 ) {
 }

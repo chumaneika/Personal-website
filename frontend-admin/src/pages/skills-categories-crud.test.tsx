@@ -98,7 +98,9 @@ describe('skill and category CRUD', () => {
         expect.objectContaining({ name: 'Spring Framework', categoryId: 7 }),
       ),
     );
-    expect(await screen.findByText('Skill saved.')).toBeInTheDocument();
+    const saveStatus = await screen.findByRole('status');
+    expect(saveStatus).toHaveAttribute('aria-live', 'polite');
+    expect(saveStatus).toHaveTextContent('Skill saved.');
   });
 
   it('lists, hides, and deletes a skill', async () => {

@@ -16,6 +16,8 @@ public record ProjectResponse(
         String githubUrl,
         String demoUrl,
         String coverImageUrl,
+        String coverImageAvifUrl,
+        String coverImageWebpUrl,
         PublicationStatus status,
         LocalDate startedAt,
         LocalDate completedAt,

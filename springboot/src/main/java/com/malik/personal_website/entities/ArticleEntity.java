@@ -35,6 +35,12 @@ public class ArticleEntity extends BaseEntity {
     @Column(name = "cover_image_url", length = 512)
     private String coverImageUrl;
 
+    @Column(name = "cover_image_avif_url", length = 512)
+    private String coverImageAvifUrl;
+
+    @Column(name = "cover_image_webp_url", length = 512)
+    private String coverImageWebpUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private PublicationStatus status = PublicationStatus.DRAFT;
@@ -57,6 +63,22 @@ public class ArticleEntity extends BaseEntity {
 
     public void setCoverImageUrl(String coverImageUrl) {
         this.coverImageUrl = normalizeOptionalText(coverImageUrl, "coverImageUrl", 512);
+    }
+
+    public void setCoverImageAvifUrl(String coverImageAvifUrl) {
+        this.coverImageAvifUrl = normalizeOptionalText(
+                coverImageAvifUrl,
+                "coverImageAvifUrl",
+                512
+        );
+    }
+
+    public void setCoverImageWebpUrl(String coverImageWebpUrl) {
+        this.coverImageWebpUrl = normalizeOptionalText(
+                coverImageWebpUrl,
+                "coverImageWebpUrl",
+                512
+        );
     }
 
     public void setStatus(PublicationStatus status) {

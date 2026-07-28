@@ -1,4 +1,5 @@
 import type { ProjectResponse } from '../../shared/types/api';
+import { OptimizedImage } from '../../shared/components/OptimizedImage';
 import { Prose } from '../../shared/components/Prose';
 import { formatMonthYear, splitTechnologyStack } from '../../shared/utils/formatters';
 
@@ -38,7 +39,19 @@ export function ProjectDetails({ project }: ProjectDetailsProps) {
       </header>
 
       {project.coverImageUrl && (
-        <img className="project-detail__cover" src={project.coverImageUrl} alt="" />
+        <OptimizedImage
+          className="project-detail__cover"
+          src={project.coverImageUrl}
+          avifSrc={project.coverImageAvifUrl}
+          webpSrc={project.coverImageWebpUrl}
+          pictureClassName="project-detail__picture"
+          alt=""
+          width={1600}
+          height={900}
+          loading="eager"
+          decoding="async"
+          fetchPriority="high"
+        />
       )}
 
       <div className="project-detail__meta">

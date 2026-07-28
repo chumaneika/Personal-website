@@ -94,6 +94,8 @@ public class ProjectService {
         project.setGithubUrl(request.githubUrl());
         project.setDemoUrl(request.demoUrl());
         project.setCoverImageUrl(request.coverImageUrl());
+        project.setCoverImageAvifUrl(request.coverImageAvifUrl());
+        project.setCoverImageWebpUrl(request.coverImageWebpUrl());
         project.setStatus(request.status() == null ? PublicationStatus.DRAFT : request.status());
         project.setStartedAt(request.startedAt());
         project.setCompletedAt(request.completedAt());

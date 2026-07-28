@@ -17,6 +17,8 @@ public record ProjectRequest(
         @Size(max = 512) String githubUrl,
         @Size(max = 512) String demoUrl,
         @Size(max = 512) String coverImageUrl,
+        @Size(max = 512) String coverImageAvifUrl,
+        @Size(max = 512) String coverImageWebpUrl,
         PublicationStatus status,
         LocalDate startedAt,
         LocalDate completedAt

@@ -1,4 +1,3 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactElement } from 'react';
 import { createMemoryRouter, type RouteObject, RouterProvider } from 'react-router-dom';
 import { render } from '@testing-library/react';
@@ -16,17 +15,6 @@ export function renderPublicRoute(
     routes?: RouteObject[];
   } = {},
 ) {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        retry: false,
-        refetchOnWindowFocus: false,
-      },
-      mutations: {
-        retry: false,
-      },
-    },
-  });
   const defaultRoutes: RouteObject[] =
     path === '*'
       ? [{ path, element }]
@@ -37,15 +25,10 @@ export function renderPublicRoute(
   const router = createMemoryRouter(routes ?? defaultRoutes, {
     initialEntries: [route],
   });
-  const view = render(
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>,
-  );
+  const view = render(<RouterProvider router={router} />);
 
   return {
     ...view,
-    queryClient,
     router,
     user: userEvent.setup(),
   };

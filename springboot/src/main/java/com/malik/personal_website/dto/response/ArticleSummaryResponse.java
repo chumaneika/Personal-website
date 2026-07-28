@@ -8,6 +8,8 @@ public record ArticleSummaryResponse(
         String slug,
         String summary,
         String coverImageUrl,
+        String coverImageAvifUrl,
+        String coverImageWebpUrl,
         Instant createdAt,
         Instant updatedAt
 ) {

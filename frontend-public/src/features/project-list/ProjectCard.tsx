@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { OptimizedImage } from '../../shared/components/OptimizedImage';
 import type { ProjectSummaryResponse } from '../../shared/types/api';
 import { formatMonthYear, splitTechnologyStack } from '../../shared/utils/formatters';
 
@@ -14,7 +15,18 @@ export function ProjectCard({ project }: ProjectCardProps) {
   return (
     <article className="project-card">
       {project.coverImageUrl ? (
-        <img className="project-card__image" src={project.coverImageUrl} alt="" loading="lazy" />
+        <OptimizedImage
+          className="project-card__image"
+          src={project.coverImageUrl}
+          avifSrc={project.coverImageAvifUrl}
+          webpSrc={project.coverImageWebpUrl}
+          pictureClassName="project-card__picture"
+          alt=""
+          width={800}
+          height={500}
+          loading="lazy"
+          decoding="async"
+        />
       ) : (
         <div className="project-card__placeholder" aria-hidden="true">
           {project.title.slice(0, 2).toUpperCase()}
