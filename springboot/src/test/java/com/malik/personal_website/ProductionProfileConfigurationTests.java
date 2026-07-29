@@ -60,6 +60,10 @@ class ProductionProfileConfigurationTests {
                     assertThat(context.getEnvironment().getProperty("sentry.enabled"))
                             .isEqualTo("true");
                     assertThat(context.getEnvironment().getProperty("sentry.dsn")).isEmpty();
+                    assertThat(context.getEnvironment().getProperty("springdoc.api-docs.enabled"))
+                            .isEqualTo("false");
+                    assertThat(context.getEnvironment().getProperty("springdoc.swagger-ui.enabled"))
+                            .isEqualTo("false");
                 });
     }
 }

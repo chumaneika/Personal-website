@@ -1,128 +1,545 @@
 # Personal Website
 
-Monorepo with two frontend applications:
+Монорепозиторий персонального сайта с публичным SSR-приложением, отдельной
+административной панелью, REST API на Spring Boot и PostgreSQL.
 
-- `frontend-public` - public-facing React Router application rendered by Node.js
-- `frontend-admin` - admin interface
+Проект включает:
 
-Both frontends use React, TypeScript, Vite, React Router, SCSS, Axios, TanStack
-Query, React Hook Form, and Zod. The public frontend uses React Router 7
-Framework Mode with server-side rendering; the admin remains a browser-only SPA.
+- публичный сайт на React Router 7 с server-side rendering;
+- административную SPA на React и Vite;
+- backend на Java 17, Spring Boot, Spring Security и Spring Data JPA;
+- PostgreSQL 16 и миграции Flyway;
+- OpenAPI 3 и Swagger UI через Springdoc;
+- production-инфраструктуру на Docker Compose с Caddy, резервным копированием и
+  полным стеком наблюдаемости.
 
-The backend uses Java 17, Spring Boot, Spring Security, Spring Data JPA, and PostgreSQL.
-The production deployment also includes Actuator, Prometheus, Alertmanager,
-Blackbox Exporter, Grafana, Loki, Alloy, and optional Sentry error reporting.
+## Архитектура
 
-## Admin authentication
+### Компоненты
 
-The admin application uses a server-side session:
+| Компонент        | Каталог              | Назначение                                                                                 |
+| ---------------- | -------------------- | ------------------------------------------------------------------------------------------ |
+| Public frontend  | `frontend-public/`   | React Router Framework Mode, SSR через Node.js, публичные страницы, SEO и контактная форма |
+| Admin frontend   | `frontend-admin/`    | Vite SPA для управления профилем, проектами, статьями, навыками и сообщениями              |
+| Backend          | `springboot/`        | REST API, бизнес-логика, аутентификация, валидация, работа с PostgreSQL                    |
+| Operations       | `ops/`               | Dockerfile, Caddy, Nginx, backup/restore и конфигурация observability                      |
+| Deployment stack | `docker-compose.yml` | Production-сервисы, сети, volumes, secrets и health checks                                 |
 
-- credentials are sent only to `POST /api/auth/login`;
-- the session identifier is stored in an HttpOnly cookie;
-- unsafe requests require a CSRF token obtained from `GET /api/auth/csrf`;
-- sign-in attempts are rate limited by client address;
-- logout invalidates the session;
-- password changes invalidate the current session.
-
-Neither the password nor an authorization header is stored in browser storage.
-
-## Scripts
-
-```bash
-npm install
-npm run dev:public
-npm run dev:admin
-npm run build:public
-npm run build:admin
-npm run build
+```text
+Браузер
+  |
+  v
+Caddy :80/:443
+  |-------------------------------|
+  |                               |
+  v                               v
+Public Node SSR                Admin Nginx SPA
+  |                               |
+  |------------ /api -------------|
+                  |
+                  v
+            Spring Boot API
+                  |
+                  v
+             PostgreSQL 16
 ```
 
-The public frontend runs on `http://localhost:5173`.
-The admin frontend runs on `http://localhost:5174`.
+В production Caddy:
 
-## Frontend quality
+- направляет публичные `/api/*`, `/robots.txt` и `/sitemap.xml` в backend;
+- направляет остальные публичные маршруты в Node SSR;
+- обслуживает admin-домен через Nginx SPA;
+- завершает TLS, перенаправляет HTTP на HTTPS и передаёт стандартные forwarded
+  headers.
 
-Both frontend workspaces share the same quality gate:
+Public frontend получает данные двумя путями:
 
-```bash
-npm run quality
+- SSR loaders обращаются к `PUBLIC_BACKEND_INTERNAL_URL` только на Node-сервере;
+- браузерные запросы используют `VITE_PUBLIC_API_URL`, по умолчанию `/api`.
+
+Admin frontend использует `VITE_ADMIN_API_URL`, по умолчанию `/api`. В локальном
+режиме Vite проксирует `/api` на `http://localhost:8080`, поэтому CORS и cookie
+работают через один origin frontend-приложения.
+
+### Структура backend
+
+Backend организован по слоям:
+
+```text
+controllers/   HTTP endpoints и DTO
+services/      бизнес-правила и транзакции
+repositories/  Spring Data JPA
+entities/      отображение таблиц PostgreSQL
+dto/           request/response-модели и mapper-классы
+config/        Spring Security, CORS, filters и bootstrap/recovery администратора
+exceptions/    единый формат ошибок API
+events/        события приложения
 ```
 
-It checks Prettier formatting, runs ESLint with zero allowed warnings, type-checks
-both TypeScript applications, executes the Vitest projects, and creates
-production builds. Useful individual commands are:
+Публичные endpoints находятся под `/api/*`, административные — под
+`/api/admin/*`, а аутентификация — под `/api/auth/*`. Backend также публикует:
 
-```bash
-npm run format
-npm run format:check
-npm run lint
-npm run lint:fix
-npm run typecheck
-npm run test
-npm run test:watch
+```text
+/api/health
+/actuator/health/liveness
+/actuator/health/readiness
+/actuator/prometheus
 ```
 
-## Frontend production builds
+Actuator доступен только внутри application-сети в Compose. Readiness проверяет
+соединение с PostgreSQL, а liveness не зависит от внешних сервисов.
 
-The two deployable frontends are built and verified independently:
+### Backend и PostgreSQL
+
+Основные backend-технологии:
+
+- Java 17 и Spring Boot 3.5;
+- Spring MVC, Validation, Security и server-side HTTP session;
+- Spring Data JPA/Hibernate;
+- PostgreSQL JDBC driver;
+- Flyway для схемы БД;
+- Actuator и Micrometer Prometheus;
+- опциональные Sentry и SMTP-уведомления.
+
+Схема содержит таблицы `users`, `profiles`, `projects`, `articles`,
+`skill_category`, `skills` и `contact_messages`. Ограничения, уникальные ключи и
+индексы определяются SQL-миграциями, а не Hibernate. В runtime используется
+`spring.jpa.hibernate.ddl-auto=validate`: JPA проверяет схему, но не создаёт и
+не изменяет её.
+
+Аутентификация администратора основана на серверной сессии:
+
+- логин отправляется только в `POST /api/auth/login`;
+- идентификатор сессии хранится в HttpOnly cookie;
+- изменяющие запросы требуют CSRF-токен из `GET /api/auth/csrf`;
+- попытки входа ограничиваются по адресу клиента;
+- logout и смена пароля инвалидируют сессию;
+- пароль и authorization header не сохраняются в browser storage.
+
+## Документация API
+
+Полное описание публичных и административных endpoints, формата ошибок,
+session/CSRF-авторизации и правил версионирования:
+[docs/api.md](docs/api.md).
+
+При локальном запуске backend доступны:
+
+```text
+Swagger UI:   http://localhost:8080/swagger-ui.html
+OpenAPI JSON: http://localhost:8080/v3/api-docs
+OpenAPI YAML: http://localhost:8080/v3/api-docs.yaml
+```
+
+Спецификация описывает только `/api/**`. В production profile и Docker Compose
+Swagger/OpenAPI выключены по умолчанию. Их включение контролируют
+`SPRINGDOC_API_DOCS_ENABLED` и `SPRINGDOC_SWAGGER_UI_ENABLED`; production proxy
+намеренно не публикует эти URL наружу.
+
+## Требования
+
+| Инструмент     | Требуемая версия              | Где зафиксирована                |
+| -------------- | ----------------------------- | -------------------------------- |
+| Java           | Temurin `17.0.19+10`          | `.java-version`                  |
+| Node.js        | `22.17.1`                     | `.nvmrc`, `package.json`         |
+| npm            | Совместимый с Node 22         | `package-lock.json` версии 3     |
+| PostgreSQL     | `16`                          | Compose и Testcontainers         |
+| Docker         | Актуальный Docker Engine      | Локальная БД, тесты и deployment |
+| Docker Compose | Compose v2 (`docker compose`) | `docker-compose.yml`             |
+
+Maven отдельно устанавливать не нужно: backend использует Maven Wrapper
+`springboot/mvnw`.
+
+Проверьте окружение:
+
+```bash
+java -version
+node --version
+npm --version
+docker --version
+docker compose version
+```
+
+Для Node.js удобно использовать nvm:
+
+```bash
+nvm install
+nvm use
+```
+
+JDK должен быть Java 17. Более новая установленная Java может компилировать
+проект, но локальное и CI-окружение должны совпадать с `.java-version`.
+
+## Полный локальный запуск
+
+Ниже приведён рекомендуемый dev-сценарий: PostgreSQL работает в Docker, а
+backend и оба frontend-приложения запускаются на хосте с hot reload.
+
+### 1. Установить frontend-зависимости
+
+Из корня репозитория:
 
 ```bash
 npm ci
-npm run build:public
-npm run build:admin
 ```
 
-The commands run React Router type generation and TypeScript checks, create
-production builds without source maps, and verify the generated entry assets.
-The public build contains `frontend-public/build/server` for the Node SSR
-runtime and `frontend-public/build/client` for browser assets. The admin SPA is
-written to `frontend-admin/dist`.
+`npm ci` устанавливает зависимости обоих npm workspaces строго по
+`package-lock.json`.
 
-The public SSR server reads data through `PUBLIC_BACKEND_INTERNAL_URL`. This is
-a Node runtime variable and is never embedded into the browser bundle. The
-contact form and the admin SPA use the same-origin `/api` endpoint by default.
-For a separate browser API origin, set `PUBLIC_FRONTEND_API_URL` or
-`ADMIN_FRONTEND_API_URL` before building the Docker images. Browser variables
-are public and must never contain secrets.
+### 2. Запустить PostgreSQL 16
 
-Build both production images with:
+Первый запуск:
 
 ```bash
-docker compose build frontend-public frontend-admin
+docker run --name personal-website-postgres-dev \
+  --detach \
+  --publish 5432:5432 \
+  --env POSTGRES_DB=users_db \
+  --env POSTGRES_USER=postgres-user \
+  --env POSTGRES_PASSWORD=local-db-password \
+  --volume personal-website-postgres-dev:/var/lib/postgresql/data \
+  postgres:16-alpine
 ```
 
-The CI pipeline uses Node.js `22.17.1` from `.nvmrc` and Temurin Java
-`17.0.19+10` from `.java-version`. Every pull request to `main` and every push
-to `main` runs:
+При следующих запусках:
 
-- frontend formatting, lint, type checks, and all Vitest tests;
-- independent production builds for the public and admin frontends;
-- the complete backend test suite;
-- PostgreSQL 16 Testcontainers checks for Flyway migrations, Hibernate schema
-  validation, constraints, and repository access;
-- Docker Compose validation and production image builds.
+```bash
+docker start personal-website-postgres-dev
+```
 
-The stable aggregate check is named `CI / Required`. Configure the `main`
-branch protection rule to require this check and require the branch to be up to
-date before merging. A failure or cancellation in any CI job then blocks the
-merge.
+Проверка:
 
-Run the backend with Java 17:
+```bash
+docker exec personal-website-postgres-dev \
+  pg_isready -U postgres-user -d users_db
+```
+
+Если порт `5432` занят, используйте `--publish 5433:5432` и укажите порт `5433`
+в `SPRING_DATASOURCE_URL`.
+
+### 3. Подготовить локальные secrets
+
+Храните secrets вне репозитория. Например, создайте соседний каталог:
+
+```bash
+DEV_SECRETS_DIR="$(cd .. && pwd)/personal-website-secrets-dev"
+install -d -m 700 "$DEV_SECRETS_DIR"
+printf '%s' 'local-db-password' \
+  > "$DEV_SECRETS_DIR/SPRING_DATASOURCE_PASSWORD"
+printf '%s' 'local-admin-password-123' \
+  > "$DEV_SECRETS_DIR/APP_ADMIN_PASSWORD"
+touch "$DEV_SECRETS_DIR/APP_ADMIN_RECOVERY_PASSWORD"
+touch "$DEV_SECRETS_DIR/SPRING_MAIL_PASSWORD"
+chmod 600 "$DEV_SECRETS_DIR"/*
+```
+
+Пароль администратора должен содержать от 12 до 128 символов, хотя бы одну
+букву и одну цифру.
+
+### 4. Создать корневой `.env`
+
+Создайте `.env` в корне репозитория. Замените значение
+`APP_SECRETS_DIRECTORY` на абсолютный путь из предыдущего шага:
+
+```env
+APP_SECRETS_DIRECTORY=/absolute/path/to/personal-website-secrets-dev/
+
+SPRING_PROFILES_ACTIVE=local
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/users_db
+SPRING_DATASOURCE_USERNAME=postgres-user
+SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+SPRING_FLYWAY_BASELINE_ON_MIGRATE=false
+
+APP_SERVER_ADDRESS=127.0.0.1
+APP_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
+APP_SESSION_COOKIE_SECURE=false
+APP_SESSION_COOKIE_SAME_SITE=lax
+APP_SECURITY_REQUIRE_HTTPS=false
+
+APP_ADMIN_INITIALIZER_ENABLED=true
+APP_ADMIN_EMAIL=admin@example.com
+
+SENTRY_ENABLED=false
+
+SPRINGDOC_API_DOCS_ENABLED=true
+SPRINGDOC_SWAGGER_UI_ENABLED=true
+```
+
+Профиль `local` использует базовый `application.yaml` и, в отличие от `prod`,
+не требует HTTPS и Secure cookie. Не используйте production-профиль для
+обычного запуска через `http://localhost`.
+
+Spring Boot загружает корневой `.env` благодаря
+`optional:file:../.env[.properties]`, когда backend запускается из каталога
+`springboot`. Для прямого запуска оставляйте завершающий `/` в
+`APP_SECRETS_DIRECTORY`: Spring импортирует этот путь как config tree.
+
+### 5. Запустить backend
+
+В первом терминале:
 
 ```bash
 cd springboot
 ./mvnw spring-boot:run
 ```
 
-Then run the public SSR frontend:
+При старте Flyway автоматически применит все миграции. Проверка:
 
 ```bash
-PUBLIC_BACKEND_INTERNAL_URL=http://localhost:8080/api \
-PUBLIC_SITE_ORIGIN=http://localhost:5173 \
+curl --fail http://localhost:8080/api/health
+curl --fail http://localhost:8080/actuator/health/readiness
+```
+
+После старта Swagger UI доступен на
+<http://localhost:8080/swagger-ui.html>.
+
+После первого успешного запуска и создания администратора:
+
+1. измените `APP_ADMIN_INITIALIZER_ENABLED=true` на `false` в `.env`;
+2. очистите файл `APP_ADMIN_PASSWORD`;
+3. перезапустите backend.
+
+```bash
+printf '' > "$DEV_SECRETS_DIR/APP_ADMIN_PASSWORD"
+```
+
+Если initializer оставить включённым после создания пользователя, следующий
+старт завершится ошибкой намеренно.
+
+### 6. Запустить frontend-приложения
+
+Во втором терминале, из корня:
+
+```bash
 npm run dev:public
 ```
 
-For a local production-mode check:
+В третьем терминале:
+
+```bash
+npm run dev:admin
+```
+
+Приложения будут доступны по адресам:
+
+- public: <http://localhost:5173>;
+- admin: <http://localhost:5174>;
+- backend: <http://localhost:8080>.
+
+Для стандартного локального запуска frontend `.env` не нужен: SSR и Vite proxy
+уже используют `localhost:8080`. Файлы `frontend-public/.env.example` и
+`frontend-admin/.env.example` нужны только для переопределения API URL, Sentry
+или release metadata.
+
+### 7. Остановить локальную БД
+
+```bash
+docker stop personal-website-postgres-dev
+```
+
+Данные сохраняются в Docker volume `personal-website-postgres-dev`.
+
+## Переменные окружения
+
+Полный шаблон production-конфигурации находится в `.env.example`. Файл `.env`
+игнорируется Git и используется Docker Compose и Spring Boot. Frontend-переменные
+для прямого запуска находятся в `frontend-public/.env.example` и
+`frontend-admin/.env.example`.
+
+### Где и когда читаются значения
+
+- Spring Boot читает `springboot/.env`, затем корневой `.env` и config tree из
+  `APP_SECRETS_DIRECTORY`.
+- Docker Compose читает корневой `.env`.
+- `VITE_*` встраиваются в браузерный bundle во время сборки и не являются
+  secrets.
+- `PUBLIC_BACKEND_INTERNAL_URL`, `PUBLIC_SITE_ORIGIN`, `HOST` и `PORT` читаются
+  Node SSR-процессом во время запуска.
+- Изменение `VITE_*` требует новой сборки frontend-образа.
+
+### Deployment и маршрутизация
+
+| Переменная                                            | Назначение                                                                                      |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `RELEASE_VERSION`                                     | Неизменяемый общий тег application-образов одного релиза                                        |
+| `APP_SECRETS_DIRECTORY`                               | Абсолютный путь к внешнему каталогу secret-файлов; для прямого Spring-запуска с завершающим `/` |
+| `PUBLIC_DOMAIN`, `ADMIN_DOMAIN`                       | Публичный и административный DNS-адреса для Caddy                                               |
+| `ACME_EMAIL`                                          | Email для ACME и автоматического выпуска TLS-сертификатов                                       |
+| `REVERSE_PROXY_BIND_ADDRESS`                          | Адрес публикации Caddy, по умолчанию `0.0.0.0`                                                  |
+| `REVERSE_PROXY_HTTP_PORT`, `REVERSE_PROXY_HTTPS_PORT` | Host-порты Caddy, по умолчанию `80` и `443`                                                     |
+| `PUBLIC_FRONTEND_API_URL`, `ADMIN_FRONTEND_API_URL`   | Compose build args, преобразуемые в соответствующие `VITE_*_API_URL`; рекомендуется `/api`      |
+| `PUBLIC_BACKEND_INTERNAL_URL`                         | Приватный абсолютный URL API для public SSR; в Compose `http://backend:8080/api`                |
+| `PUBLIC_SITE_ORIGIN`                                  | Внешний origin public-сайта для canonical URL и metadata                                        |
+| `APP_SERVER_ADDRESS`                                  | Адрес, на котором слушает backend; Compose принудительно задаёт `0.0.0.0`                       |
+| `SPRING_PROFILES_ACTIVE`                              | Активный Spring profile; в production — `prod`                                                  |
+
+### PostgreSQL, JPA, Flyway и backups
+
+| Переменная                                   | Назначение                                                             |
+| -------------------------------------------- | ---------------------------------------------------------------------- |
+| `SPRING_DATASOURCE_URL`                      | JDBC URL PostgreSQL                                                    |
+| `SPRING_DATASOURCE_USERNAME`                 | Пользователь backend-подключения                                       |
+| `SPRING_DATASOURCE_DRIVER_CLASS_NAME`        | JDBC driver, обычно `org.postgresql.Driver`                            |
+| `SPRING_DATASOURCE_PASSWORD`                 | Пароль datasource; в production поступает из одноимённого secret-файла |
+| `POSTGRES_DB`, `POSTGRES_USER`               | База и пользователь, создаваемые образом PostgreSQL                    |
+| `SPRING_JPA_HIBERNATE_DDL_AUTO`              | Режим Hibernate; рабочее значение `validate`                           |
+| `SPRING_JPA_SHOW_SQL`                        | Вывод SQL Hibernate                                                    |
+| `SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL` | Форматирование SQL в логах                                             |
+| `SPRING_FLYWAY_BASELINE_ON_MIGRATE`          | Одноразовый baseline старой схемы; обычно всегда `false`               |
+| `POSTGRES_BACKUP_DIRECTORY`                  | Каталог backup на хосте, по умолчанию `./backups/postgres`             |
+| `POSTGRES_BACKUP_INTERVAL_SECONDS`           | Интервал автоматического backup, по умолчанию `86400`                  |
+| `POSTGRES_BACKUP_RETRY_SECONDS`              | Задержка повтора после ошибки, по умолчанию `300`                      |
+| `POSTGRES_BACKUP_RETENTION_DAYS`             | Срок хранения backup, по умолчанию `14` дней                           |
+
+### Администратор и security
+
+| Переменная                                               | Назначение                                        |
+| -------------------------------------------------------- | ------------------------------------------------- |
+| `APP_ADMIN_INITIALIZER_ENABLED`, `APP_ADMIN_EMAIL`       | Одноразовое создание администратора               |
+| `APP_ADMIN_RECOVERY_ENABLED`, `APP_ADMIN_RECOVERY_EMAIL` | Одноразовое восстановление пароля при старте      |
+| `APP_ADMIN_PASSWORD`                                     | Bootstrap-пароль из внешнего secret-файла         |
+| `APP_ADMIN_RECOVERY_PASSWORD`                            | Recovery-пароль из внешнего secret-файла          |
+| `APP_CORS_ALLOWED_ORIGINS`                               | Точный список разрешённых origins через запятую   |
+| `APP_SESSION_TIMEOUT`                                    | Время жизни HTTP session, по умолчанию `30m`      |
+| `APP_SESSION_COOKIE_SECURE`                              | Отправлять session cookie только по HTTPS         |
+| `APP_SESSION_COOKIE_SAME_SITE`                           | Политика SameSite; production использует `strict` |
+| `APP_SECURITY_REQUIRE_HTTPS`                             | Требовать безопасный протокол                     |
+| `APP_LOGIN_MAX_ATTEMPTS`                                 | Максимум неудачных попыток входа в окне           |
+| `APP_LOGIN_ATTEMPT_WINDOW`                               | Окно подсчёта попыток входа                       |
+| `APP_LOGIN_BLOCK_DURATION`                               | Длительность блокировки после превышения лимита   |
+
+Production profile принудительно включает HTTPS, HSTS, Secure/HttpOnly cookie,
+`SameSite=Strict`, скрытие деталей ошибок и graceful shutdown.
+
+### Контактная форма и email
+
+| Переменная                                                     | Назначение                                         |
+| -------------------------------------------------------------- | -------------------------------------------------- |
+| `APP_CONTACT_MAX_REQUEST_BYTES`                                | Максимальный размер запроса, по умолчанию `16384`  |
+| `APP_CONTACT_DUPLICATE_WINDOW`                                 | Период блокировки дубликата email + message        |
+| `APP_CONTACT_RATE_LIMIT_MAX_SUBMISSIONS`                       | Максимум отправок с одного IP за окно              |
+| `APP_CONTACT_RATE_LIMIT_WINDOW`                                | Окно rate limit                                    |
+| `APP_CONTACT_RETENTION_ENABLED`                                | Включить архивирование и удаление старых сообщений |
+| `APP_CONTACT_RETENTION_CRON`                                   | Cron задачи retention                              |
+| `APP_CONTACT_ARCHIVE_READ_AFTER`                               | Через сколько архивировать прочитанные сообщения   |
+| `APP_CONTACT_DELETE_ARCHIVED_AFTER`                            | Через сколько удалять архивные сообщения           |
+| `APP_CONTACT_EMAIL_NOTIFICATIONS_ENABLED`                      | Включить асинхронное SMTP-уведомление              |
+| `APP_CONTACT_EMAIL_FROM`, `APP_CONTACT_EMAIL_TO`               | Отправитель и получатель уведомления               |
+| `APP_CONTACT_EMAIL_SUBJECT`                                    | Тема письма                                        |
+| `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`, `SPRING_MAIL_USERNAME` | SMTP-подключение                                   |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH`                        | SMTP authentication                                |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE`             | Включить STARTTLS                                  |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_REQUIRED`           | Требовать STARTTLS                                 |
+| `SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_CHECKSERVERIDENTITY`     | Проверять hostname TLS-сертификата                 |
+| `SPRING_MAIL_PASSWORD`                                         | SMTP-пароль из внешнего secret-файла               |
+
+Контактная форма дополнительно использует honeypot, проверку дубликатов и
+ограничение размера до JSON parsing. Ошибка SMTP логируется, но не откатывает
+сохранённое сообщение.
+
+### Sentry и observability
+
+| Переменная                                        | Назначение                                                                  |
+| ------------------------------------------------- | --------------------------------------------------------------------------- |
+| `SENTRY_DSN`, `SENTRY_ENABLED`                    | Backend Sentry DSN и включение SDK                                          |
+| `SENTRY_ENVIRONMENT`, `SENTRY_RELEASE`            | Backend environment и release                                               |
+| `SENTRY_TRACES_SAMPLE_RATE`                       | Доля backend traces                                                         |
+| `VITE_PUBLIC_SENTRY_DSN`, `VITE_ADMIN_SENTRY_DSN` | Публичные client DSN двух frontend-приложений                               |
+| `VITE_SENTRY_ENVIRONMENT`, `VITE_RELEASE`         | Frontend environment и release, встраиваемые при build                      |
+| `OBSERVABILITY_BIND_ADDRESS`                      | Адрес host-портов Grafana/Prometheus/Alertmanager; по умолчанию `127.0.0.1` |
+| `OBSERVABILITY_ENVIRONMENT`                       | Environment label для метрик и логов                                        |
+| `GRAFANA_PORT`, `GRAFANA_ADMIN_USER`              | Порт и имя администратора Grafana                                           |
+| `PROMETHEUS_PORT`, `PROMETHEUS_RETENTION_TIME`    | Порт и срок хранения Prometheus                                             |
+| `ALERTMANAGER_PORT`                               | Локальный порт Alertmanager                                                 |
+| `PUBLIC_SITE_PROBE_URL`, `ADMIN_SITE_PROBE_URL`   | Внешние HTTPS URL для Blackbox Exporter                                     |
+
+Пустой Sentry DSN отключает отправку событий. Для production создавайте разные
+Sentry projects для backend, public frontend и admin frontend.
+
+### OpenAPI
+
+| Переменная                     | Назначение                                                        |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `SPRINGDOC_API_DOCS_ENABLED`   | Включает OpenAPI JSON/YAML; локально `true`, в production `false` |
+| `SPRINGDOC_SWAGGER_UI_ENABLED` | Включает Swagger UI; локально `true`, в production `false`        |
+
+### Frontend-переменные при прямом запуске
+
+| Переменная                                        | Приложение               | Назначение                        |
+| ------------------------------------------------- | ------------------------ | --------------------------------- |
+| `VITE_PUBLIC_API_URL`                             | Public browser bundle    | API base URL, по умолчанию `/api` |
+| `PUBLIC_BACKEND_INTERNAL_URL`                     | Public Node SSR          | Абсолютный API URL для loaders    |
+| `PUBLIC_SITE_ORIGIN`                              | Public Node SSR          | Origin для SEO metadata           |
+| `VITE_ADMIN_API_URL`                              | Admin browser bundle     | API base URL, по умолчанию `/api` |
+| `VITE_PUBLIC_SENTRY_DSN`, `VITE_ADMIN_SENTRY_DSN` | Соответствующий frontend | Sentry DSN                        |
+| `VITE_SENTRY_ENVIRONMENT`, `VITE_RELEASE`         | Оба frontend             | Sentry metadata                   |
+| `HOST`, `PORT`                                    | Public Node SSR          | Runtime bind address и port       |
+
+Дополнительные редкие настройки backend:
+`LOGGING_STRUCTURED_FORMAT_CONSOLE` выбирает формат console logs, а
+`SERVER_FORWARD_HEADERS_STRATEGY` управляет обработкой forwarded headers.
+
+### Внешние secret-файлы
+
+Compose ожидает в `APP_SECRETS_DIRECTORY` ровно эти файлы:
+
+```text
+SPRING_DATASOURCE_PASSWORD
+APP_ADMIN_PASSWORD
+APP_ADMIN_RECOVERY_PASSWORD
+SPRING_MAIL_PASSWORD
+GRAFANA_ADMIN_PASSWORD
+ALERTMANAGER_WEBHOOK_URL
+```
+
+Docker Compose монтирует только нужные файлы каждого сервиса в `/run/secrets`.
+Значения не попадают в Compose environment, `.env`, image layers или Git.
+
+## Сборка и тестирование
+
+### Frontend
+
+Установка:
+
+```bash
+npm ci
+```
+
+Основные команды:
+
+```bash
+npm run dev:public
+npm run dev:admin
+npm run build:public
+npm run build:admin
+npm run build
+npm run test
+npm run test:watch
+npm run typecheck
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:check
+```
+
+Полный frontend quality gate:
+
+```bash
+npm run quality
+```
+
+Он последовательно запускает Prettier check, ESLint без warnings, TypeScript,
+Vitest и production build обоих приложений.
+
+Результаты сборки:
+
+```text
+frontend-public/build/server   Node SSR bundle
+frontend-public/build/client   browser assets
+frontend-admin/dist            статическая admin SPA
+```
+
+Локальная проверка production runtime public frontend:
 
 ```bash
 npm run build:public
@@ -132,317 +549,270 @@ PUBLIC_SITE_ORIGIN=http://localhost:3000 \
 PORT=3000 npm run start
 ```
 
-Copy `.env.example` to `.env` before starting the backend or Docker Compose.
-The file contains configuration only; passwords must not be added to it.
+### Backend
 
-## External secrets
-
-Sensitive deployment values are stored as files in a directory outside the
-repository. Create the directory, generate the database and Grafana passwords,
-create the one-time bootstrap/recovery and optional SMTP files, and provide the
-Alertmanager receiver URL:
+Из каталога `springboot`:
 
 ```bash
-install -d -m 700 /secure/path/personal-website-secrets
-openssl rand -hex 32 | tr -d '\n' > /secure/path/personal-website-secrets/SPRING_DATASOURCE_PASSWORD
-openssl rand -hex 32 | tr -d '\n' > /secure/path/personal-website-secrets/GRAFANA_ADMIN_PASSWORD
-touch /secure/path/personal-website-secrets/APP_ADMIN_PASSWORD
-touch /secure/path/personal-website-secrets/APP_ADMIN_RECOVERY_PASSWORD
-touch /secure/path/personal-website-secrets/SPRING_MAIL_PASSWORD
-printf '%s' 'https://alerts.example.com/alertmanager' \
-  > /secure/path/personal-website-secrets/ALERTMANAGER_WEBHOOK_URL
-chmod 600 /secure/path/personal-website-secrets/*
+./mvnw test
+./mvnw clean package
+./mvnw spring-boot:run
 ```
 
-Set the absolute external directory path in `.env`:
-
-```env
-APP_SECRETS_DIRECTORY=/secure/path/personal-website-secrets
-```
-
-Docker Compose mounts only the secret files required by each service under
-`/run/secrets`; their values are not placed in Compose, `.env`, container
-environment variables, or images. PostgreSQL reads its password through
-`POSTGRES_PASSWORD_FILE`, while Spring Boot imports its mounted files as a
-configuration tree.
-
-For a direct host run, `APP_SECRETS_DIRECTORY` is loaded from the root `.env`.
-Keep the six filenames exactly as shown above. The Alertmanager URL must point
-to a receiver that accepts Alertmanager webhook JSON. On a managed deployment,
-the same files can be materialized by the platform's secret manager instead of
-being created manually.
-
-## Database migrations
-
-Flyway owns the database schema. The initial migration is
-`springboot/src/main/resources/db/migration/V1__initial_schema.sql`, and
-`V2__add_constraints_and_indexes.sql` hardens both fresh and baselined existing
-databases. Hibernate runs with `ddl-auto=validate`.
-
-Add every later schema change as a new immutable migration:
-
-```text
-V3__add_project_metrics.sql
-V4__add_article_published_at.sql
-```
-
-Do not edit a migration after it has been applied. `baseline-on-migrate` is
-disabled by default. Enable it only for the one-time adoption of an existing
-Hibernate-created database at version 1, then immediately return it to:
-
-```env
-SPRING_FLYWAY_BASELINE_ON_MIGRATE=false
-```
-
-The backend test suite applies the migrations to H2 in PostgreSQL compatibility
-mode. When Docker is available, it also starts PostgreSQL 16 with Testcontainers
-and verifies that Flyway migration and Hibernate schema validation both succeed.
-The GitHub Actions backend job runs this PostgreSQL check on every push and pull
-request.
-
-## Production security
-
-Production uses the separate
-`springboot/src/main/resources/application-prod.yaml` profile:
-
-```env
-SPRING_PROFILES_ACTIVE=prod
-```
-
-The production profile requires HTTPS, enables HSTS, trusts forwarded protocol
-headers, marks the session cookie as `HttpOnly`, `Secure`, and `SameSite=Strict`,
-hides error details, enables graceful shutdown, validates the Hibernate schema,
-and keeps Flyway clean and automatic baseline operations disabled. The bundled
-edge proxy terminates TLS and sends the standard forwarded headers.
-
-## HTTPS deployment and private services
-
-Docker Compose builds the public React Router server and the admin Vite SPA.
-The public site runs in a non-root Node.js container, the admin runs in its
-existing non-root Nginx container, and Caddy sits in front of both:
-
-```text
-Internet :80/:443
-        |
-   edge-proxy
-      /    \
-Node SSR  admin SPA
-      \    /
-   Spring Boot
-         |
-     PostgreSQL
-```
-
-Only Caddy publishes host ports. The frontend containers are reachable only
-from the edge and application Docker networks, Spring Boot is reachable only
-from the application network, and PostgreSQL is attached exclusively to the
-internal database network. PostgreSQL has no host port mapping.
-
-For the public domain, Caddy sends `/api/*`, `/robots.txt`, and `/sitemap.xml`
-directly to Spring Boot. Every other public URL goes to the Node SSR frontend.
-The Node server loads page data from `http://backend:8080/api` inside Docker and
-returns content and SEO metadata in the initial HTML. The admin domain continues
-to use the unchanged Nginx SPA runtime.
-
-Set `PUBLIC_DOMAIN`, `ADMIN_DOMAIN`, `ACME_EMAIL`,
-`PUBLIC_BACKEND_INTERNAL_URL`, and `PUBLIC_SITE_ORIGIN` in `.env`. Compose uses
-the Docker-internal backend URL and derives the production site origin from
-`PUBLIC_DOMAIN`; the explicit values in `.env` also document the equivalent
-settings for direct runs outside Compose. Point both domains' A/AAAA records to
-the server and allow inbound TCP ports 80 and 443 plus UDP port 443. Set the two
-exact HTTPS origins in `APP_CORS_ALLOWED_ORIGINS`.
-
-Set a new immutable `RELEASE_VERSION` before each deployment. Compose applies
-the same tag to every application image, which allows the complete application
-set to be rolled back without rebuilding:
-
-```env
-RELEASE_VERSION=2026.07.28-1
-```
-
-Start or rebuild the complete deployment with:
+`clean package` запускает тесты и создаёт executable jar в `springboot/target`.
+Сборка без тестов, аналогичная build stage Dockerfile:
 
 ```bash
-docker compose up --build -d
+./mvnw -DskipTests package
 ```
 
-Caddy obtains certificates automatically, redirects HTTP to HTTPS, and renews
-managed certificates before expiration. Its `/data` and `/config` directories
-use persistent Docker volumes, so certificates and ACME state survive container
-replacement. Do not delete `caddy_data` during routine deployments.
-
-The public Node runtime exposes `/healthz`. Missing public routes and missing
-project or article slugs return a real HTTP `404`; the admin Nginx runtime keeps
-its SPA fallback. Hashed Vite assets are still served from the public build.
-
-Verify the deployment:
+Полный `./mvnw test` использует H2 в PostgreSQL compatibility mode. Если Docker
+доступен, Testcontainers дополнительно запускает PostgreSQL 16. Явная проверка
+реальной PostgreSQL и миграций:
 
 ```bash
-docker compose ps
-curl -I "https://${PUBLIC_DOMAIN}/healthz"
-curl -I "https://${PUBLIC_DOMAIN}/projects/example"
-curl -I "https://${ADMIN_DOMAIN}/login"
+./mvnw -Dtest=PostgreSqlMigrationIntegrationTests test
 ```
 
-## Observability
-
-The backend exposes internal-only Actuator endpoints:
-
-```text
-/actuator/health/liveness
-/actuator/health/readiness
-/actuator/prometheus
-```
-
-Readiness includes the PostgreSQL health indicator; liveness intentionally does
-not depend on external services. Docker uses readiness for backend health, and
-Prometheus records request rate, HTTP 5xx ratio, response-time histograms, and
-p95 latency. Blackbox Exporter checks the configured public and admin HTTPS
-URLs end to end.
-
-Backend logs and proxy access logs are written as JSON to stdout. Alloy
-discovers the Compose containers and sends all stdout/stderr logs to Loki.
-Grafana is provisioned with Prometheus and Loki datasources plus the
-`Personal website overview` dashboard. Grafana, Prometheus, and Alertmanager
-bind to `127.0.0.1` by default.
-
-Set the Sentry variables from `.env.example` to enable backend and browser error
-reporting. Blank DSNs leave each SDK disabled. Because Vite variables are
-embedded at build time, rebuild the frontend images after changing a frontend
-DSN or release.
-
-Alertmanager sends both firing and resolved notifications to the URL stored in
-`ALERTMANAGER_WEBHOOK_URL`. The complete setup, validation commands, alert
-thresholds, log queries, and incident procedures are in
-[docs/observability-runbook.md](docs/observability-runbook.md).
-
-To access PostgreSQL for maintenance, execute the client inside the database
-container instead of publishing port 5432:
+### Docker
 
 ```bash
-docker compose exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"
+docker compose config --quiet
+docker compose build
+docker compose build frontend-public frontend-admin backend edge-proxy
 ```
 
-The complete application and database rollback procedure is documented in
-[docs/release-rollback.md](docs/release-rollback.md).
+CI на push и pull request в `main` запускает frontend quality, независимые
+frontend builds, backend tests, PostgreSQL migration tests и сборку всех
+deployment-образов. Итоговый обязательный check называется `CI / Required`.
 
-## One-time administrator bootstrap
+## Docker Compose
 
-Automatic administrator creation is disabled by default. For a fresh database:
+`docker-compose.yml` предназначен для production-подобного запуска с реальными
+DNS-именами и TLS. Он не публикует PostgreSQL и backend на host; снаружи доступны
+только Caddy и loopback-порты observability.
 
-1. Put a strong, unique password in the external `APP_ADMIN_PASSWORD` file.
+### Сервисы
+
+- `edge-proxy` — Caddy и автоматический TLS;
+- `frontend-public` — Node.js SSR;
+- `frontend-admin` — Nginx SPA;
+- `backend` — Spring Boot;
+- `postgres` — PostgreSQL 16;
+- `postgres-backup` — периодический `pg_dump`;
+- `prometheus`, `alertmanager`, `blackbox-exporter`;
+- `grafana`, `loki`, `alloy`.
+
+PostgreSQL находится только во внутренней сети `database`. Backend соединяет
+сети `application` и `database`. Caddy и frontend находятся в `edge`, а
+observability-компоненты — в `monitoring`.
+
+### Настройка
+
+1. Скопируйте шаблон:
 
    ```bash
-   openssl rand -hex 32 | tr -d '\n' \
-     > /secure/path/personal-website-secrets/APP_ADMIN_PASSWORD
-   chmod 600 /secure/path/personal-website-secrets/APP_ADMIN_PASSWORD
+   cp .env.example .env
    ```
 
-2. Set these values in `.env`:
+2. Установите уникальный `RELEASE_VERSION`, реальные домены, ACME email,
+   PostgreSQL-настройки, CORS origins, site origins и probe URL.
+
+3. Создайте внешний каталог secrets:
+
+   ```bash
+   install -d -m 700 /secure/path/personal-website-secrets
+   openssl rand -hex 32 | tr -d '\n' \
+     > /secure/path/personal-website-secrets/SPRING_DATASOURCE_PASSWORD
+   openssl rand -hex 32 | tr -d '\n' \
+     > /secure/path/personal-website-secrets/GRAFANA_ADMIN_PASSWORD
+   touch /secure/path/personal-website-secrets/APP_ADMIN_PASSWORD
+   touch /secure/path/personal-website-secrets/APP_ADMIN_RECOVERY_PASSWORD
+   touch /secure/path/personal-website-secrets/SPRING_MAIL_PASSWORD
+   printf '%s' 'https://alerts.example.com/alertmanager' \
+     > /secure/path/personal-website-secrets/ALERTMANAGER_WEBHOOK_URL
+   chmod 600 /secure/path/personal-website-secrets/*
+   ```
+
+4. Укажите абсолютный путь:
+
+   ```env
+   APP_SECRETS_DIRECTORY=/secure/path/personal-website-secrets/
+   ```
+
+5. Проверьте итоговую конфигурацию и запустите stack:
+
+   ```bash
+   docker compose config --quiet
+   docker compose up --build -d
+   docker compose ps
+   ```
+
+6. Проверьте endpoints:
+
+   ```bash
+   curl --fail "https://${PUBLIC_DOMAIN}/api/health"
+   curl --fail "https://${PUBLIC_DOMAIN}/healthz"
+   curl --fail "https://${PUBLIC_DOMAIN}/"
+   curl --fail "https://${ADMIN_DOMAIN}/login"
+   ```
+
+Логи:
+
+```bash
+docker compose logs --tail 200 backend edge-proxy
+docker compose logs --follow backend frontend-public frontend-admin
+```
+
+Остановка:
+
+```bash
+docker compose down
+```
+
+Обычный `down` сохраняет named volumes. Не используйте `docker compose down -v`
+в production: эта команда удаляет persistent data, включая PostgreSQL, Caddy,
+Prometheus, Loki и Grafana.
+
+## Миграции базы данных
+
+Flyway автоматически применяет миграции из
+`springboot/src/main/resources/db/migration` при каждом старте backend.
+
+Текущая последовательность:
+
+| Версия | Файл                                       | Изменение                                       |
+| ------ | ------------------------------------------ | ----------------------------------------------- |
+| V1     | `V1__initial_schema.sql`                   | Исходные таблицы и sequence                     |
+| V2     | `V2__add_constraints_and_indexes.sql`      | CHECK constraints и основные индексы            |
+| V3     | `V3__index_contact_message_duplicates.sql` | Индекс для проверки дубликатов контактной формы |
+| V4     | `V4__add_modern_image_urls.sql`            | URL для AVIF/WebP изображений                   |
+
+Правила:
+
+1. Создавайте новый файл `V<N>__short_description.sql`.
+2. Никогда не редактируйте уже применённую миграцию.
+3. Делайте миграции forward-only и безопасными для существующих данных.
+4. Проверяйте constraints, индексы и совместимость JPA entities.
+5. Запускайте тест с реальной PostgreSQL:
+
+   ```bash
+   cd springboot
+   ./mvnw -Dtest=PostgreSqlMigrationIntegrationTests test
+   ```
+
+Применённые версии записываются Flyway в `flyway_schema_history`. Hibernate
+после миграции выполняет `ddl-auto=validate`; несовпадение схемы останавливает
+приложение.
+
+`SPRING_FLYWAY_BASELINE_ON_MIGRATE=false` должно оставаться выключенным для
+обычных и новых баз. Включайте его только один раз при принятии существующей
+до-Flyway схемы на baseline version 1, затем немедленно возвращайте `false`.
+
+`flyway clean` отключён. SQL downgrade-миграции не используются: исправление
+схемы выполняется новой forward-миграцией. Откат application-образов и
+восстановление PostgreSQL описаны в
+[инструкции отката](docs/release-rollback.md).
+
+## Production deployment
+
+Текущий deployment рассчитан на один Docker host. Репозиторий содержит CI, но
+не содержит автоматической публикации образов или CD: production-команды
+выполняются на целевом сервере.
+
+### Подготовка сервера
+
+- Установите Docker Engine и Docker Compose v2.
+- Направьте A/AAAA записи `PUBLIC_DOMAIN` и `ADMIN_DOMAIN` на сервер.
+- Разрешите TCP `80`, TCP `443` и UDP `443`.
+- Оставьте Grafana, Prometheus и Alertmanager на
+  `OBSERVABILITY_BIND_ADDRESS=127.0.0.1`; используйте SSH tunnel.
+- Разместите `.env` и внешний каталог secrets с правами `700/600`.
+- Не храните secrets в репозитории, `.env`, environment контейнеров или images.
+- Оставьте Swagger/OpenAPI выключенными, если для них не настроен отдельный
+  доверенный доступ.
+
+### Выпуск релиза
+
+1. Выберите новый неизменяемый тег:
+
+   ```env
+   RELEASE_VERSION=2026.07.29-1
+   SENTRY_RELEASE=2026.07.29-1
+   VITE_RELEASE=2026.07.29-1
+   SPRING_PROFILES_ACTIVE=prod
+   ```
+
+2. До применения миграций создайте backup:
+
+   ```bash
+   docker compose run --rm --entrypoint /bin/sh postgres-backup \
+     /scripts/backup.sh
+   ```
+
+3. Проверьте конфигурацию, соберите образы и обновите stack:
+
+   ```bash
+   docker compose config --quiet
+   docker compose build --pull
+   docker compose up -d --remove-orphans
+   ```
+
+4. Дождитесь healthy-состояния:
+
+   ```bash
+   docker compose ps
+   docker compose logs --since 10m backend edge-proxy
+   ```
+
+5. Проверьте public, admin, API, login, контактную форму, логи и dashboard:
+
+   ```bash
+   curl --fail "https://${PUBLIC_DOMAIN}/api/health"
+   curl --fail "https://${PUBLIC_DOMAIN}/"
+   curl --fail "https://${ADMIN_DOMAIN}/login"
+   ```
+
+Flyway запускается вместе с backend до успешной readiness-проверки. Caddy
+автоматически выпускает и обновляет сертификаты; volumes `caddy_data` и
+`caddy_config` нельзя удалять при обычном release.
+
+### Первый production-администратор
+
+1. Запишите сильный одноразовый пароль в `APP_ADMIN_PASSWORD`.
+2. Установите:
 
    ```env
    APP_ADMIN_INITIALIZER_ENABLED=true
    APP_ADMIN_EMAIL=admin@example.com
    ```
 
-3. Start the backend and verify that the administrator can sign in:
-
-   ```bash
-   docker compose up -d
-   ```
-
-4. Immediately set `APP_ADMIN_INITIALIZER_ENABLED=false`, empty the external
-   `APP_ADMIN_PASSWORD` file, and recreate the backend:
+3. Запустите backend и проверьте login.
+4. Сразу установите initializer в `false`, очистите secret-файл и пересоздайте
+   backend:
 
    ```bash
    docker compose up -d --force-recreate backend
    ```
 
-If bootstrap remains enabled after the account exists, the next backend start
-fails intentionally. This prevents a deleted administrator account from being
-silently recreated with a retained bootstrap password.
+Для аварийного восстановления используйте аналогичный одноразовый механизм
+`APP_ADMIN_RECOVERY_ENABLED`, `APP_ADMIN_RECOVERY_EMAIL` и
+`APP_ADMIN_RECOVERY_PASSWORD`. Recovery endpoint намеренно отсутствует.
 
-## Changing and recovering the admin password
+### Backups и rollback
 
-The password can be changed from the admin Settings page. Passwords must contain
-12–128 characters with at least one letter and one number. A successful change
-invalidates the current session.
+Автоматический `postgres-backup` создаёт compressed custom-format dump,
+проверяет его через `pg_restore --list`, создаёт SHA-256 checksum и удаляет
+архивы старше срока retention.
 
-If access is lost, use the one-time startup recovery mechanism. Set these values
-in `.env`:
-
-```env
-APP_ADMIN_RECOVERY_ENABLED=true
-APP_ADMIN_RECOVERY_EMAIL=admin@example.com
-```
-
-Write the new password to the external `APP_ADMIN_RECOVERY_PASSWORD` file, start
-the backend once, and verify the recovery warning in the logs. Then immediately
-set `APP_ADMIN_RECOVERY_ENABLED=false` and empty the password file. Recovery is
-intentionally not exposed as a public HTTP endpoint.
-
-## Contact form protection
-
-The public contact form is protected at several layers:
-
-- a per-IP submission window rejects excessive traffic with `429` and
-  `Retry-After`;
-- a hidden honeypot field silently discards automated submissions;
-- an identical email-and-message pair is accepted only once during the
-  configured duplicate window;
-- requests larger than `APP_CONTACT_MAX_REQUEST_BYTES` are rejected with `413`
-  before JSON parsing;
-- read messages are archived after 30 days by default, and archived messages
-  are deleted after 365 days;
-- accepted messages can trigger an asynchronous email notification after the
-  database transaction commits.
-
-Tune the limits and retention policy with the `APP_CONTACT_*` values documented
-in `.env.example`. The in-memory IP limiter is appropriate for the current
-single-backend deployment. If several backend instances are deployed, replace
-its local state with a shared limiter such as Redis.
-
-Email notifications are disabled by default. To enable them, configure an SMTP
-account using `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT`,
-`SPRING_MAIL_USERNAME`, and the SMTP authentication/TLS properties from
-`.env.example`. Put the SMTP password in the external `SPRING_MAIL_PASSWORD`
-file, then set:
-
-```env
-APP_CONTACT_EMAIL_NOTIFICATIONS_ENABLED=true
-APP_CONTACT_EMAIL_FROM=website@example.com
-APP_CONTACT_EMAIL_TO=owner@example.com
-```
-
-Notification delivery happens asynchronously. A mail server failure is logged
-but does not lose or roll back the saved contact message.
-
-## PostgreSQL backups
-
-Docker Compose runs a dedicated `postgres-backup` service. It creates a
-compressed PostgreSQL custom-format archive when the service starts and then
-once every 24 hours. Every completed archive is validated with `pg_restore
---list`, accompanied by a SHA-256 checksum, and kept for 14 days by default.
-Temporary or failed dumps are not treated as completed backups.
-
-Backups are written to `./backups/postgres` and are ignored by Git. Configure
-the location, interval, retry delay, and retention in `.env`:
-
-```env
-POSTGRES_BACKUP_DIRECTORY=./backups/postgres
-POSTGRES_BACKUP_INTERVAL_SECONDS=86400
-POSTGRES_BACKUP_RETRY_SECONDS=300
-POSTGRES_BACKUP_RETENTION_DAYS=14
-```
-
-Create an additional backup manually:
+Ручной backup:
 
 ```bash
-docker compose run --rm --entrypoint /bin/sh postgres-backup /scripts/backup.sh
+docker compose run --rm --entrypoint /bin/sh postgres-backup \
+  /scripts/backup.sh
 ```
 
-Before restoring, copy the selected `.dump` and its `.sha256` file to a safe
-location and stop the backend:
+Restore пересоздаёт базу и уничтожает её текущее содержимое:
 
 ```bash
 docker compose stop backend
@@ -451,10 +821,153 @@ docker compose run --rm --entrypoint /bin/sh postgres-backup \
 docker compose start backend
 ```
 
-Restore recreates the configured application database and is destructive for
-its current contents. The checksum and archive structure are verified before
-the database is dropped.
+Храните копии backup в зашифрованном off-site storage и регулярно проверяйте
+restore на отдельной PostgreSQL. Полный порядок application rollback и
+восстановления БД находится в
+[docs/release-rollback.md](docs/release-rollback.md).
 
-Backups stored on the same server do not protect against loss of that server.
-Synchronize `POSTGRES_BACKUP_DIRECTORY` to encrypted off-site storage and
-periodically test restoration on a separate PostgreSQL instance.
+### Observability
+
+Prometheus собирает backend-метрики и Blackbox probes. Grafana автоматически
+получает Prometheus/Loki datasources и dashboard `Personal website overview`.
+Alloy собирает JSON logs Docker-контейнеров и отправляет их в Loki.
+Alertmanager отправляет firing и resolved events на URL из
+`ALERTMANAGER_WEBHOOK_URL`.
+
+Подробные alerts, запросы, проверки и incident procedures:
+[docs/observability-runbook.md](docs/observability-runbook.md).
+
+## Troubleshooting
+
+### Backend не стартует: datasource properties are not set
+
+Проверьте наличие `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`,
+абсолютный `APP_SECRETS_DIRECTORY` и читаемый файл
+`SPRING_DATASOURCE_PASSWORD`.
+
+```bash
+docker exec personal-website-postgres-dev \
+  pg_isready -U postgres-user -d users_db
+```
+
+### Connection refused к PostgreSQL
+
+- убедитесь, что dev-контейнер запущен;
+- проверьте host-порт через `docker ps`;
+- при `5433:5432` измените JDBC URL на `localhost:5433`;
+- внутри Compose используйте host `postgres`, а не `localhost`.
+
+### Flyway checksum mismatch или validation failed
+
+Не изменяйте применённый SQL-файл и не удаляйте строки из
+`flyway_schema_history`. Верните файл к исходному содержимому и создайте новую
+миграцию. Для диагностики:
+
+```bash
+docker compose logs backend
+docker compose exec postgres sh -c \
+  'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "select installed_rank, version, description, success from flyway_schema_history order by installed_rank;"'
+```
+
+### Admin login не сохраняет сессию локально
+
+Проверьте, что не активен `prod`, а локальная конфигурация содержит:
+
+```env
+APP_SESSION_COOKIE_SECURE=false
+APP_SECURITY_REQUIRE_HTTPS=false
+APP_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5174
+```
+
+Предпочитайте стандартный Vite proxy и `/api`. При прямом cross-origin API URL
+origin должен точно присутствовать в CORS, а запросы должны передавать cookie.
+
+### Backend падает после первого bootstrap
+
+После создания администратора задайте
+`APP_ADMIN_INITIALIZER_ENABLED=false`, очистите `APP_ADMIN_PASSWORD` и
+перезапустите backend. Повторный bootstrap блокируется намеренно.
+
+### Public SSR получает ECONNREFUSED или 5xx
+
+Для локального запуска используйте:
+
+```env
+PUBLIC_BACKEND_INTERNAL_URL=http://localhost:8080/api
+PUBLIC_SITE_ORIGIN=http://localhost:5173
+```
+
+В Compose backend URL должен быть `http://backend:8080/api`. Убедитесь, что
+backend readiness имеет статус `UP`.
+
+### Frontend не видит изменённые `VITE_*`
+
+Эти значения встраиваются во время build. Остановите dev server или пересоберите
+production image:
+
+```bash
+npm run build
+docker compose build frontend-public frontend-admin
+docker compose up -d frontend-public frontend-admin
+```
+
+### Swagger UI или `/v3/api-docs` возвращает 404
+
+Для прямого локального запуска проверьте:
+
+```env
+SPRINGDOC_API_DOCS_ENABLED=true
+SPRINGDOC_SWAGGER_UI_ENABLED=true
+```
+
+В production эти endpoints по умолчанию выключены, а Caddy/Nginx намеренно не
+маршрутизируют их из интернета. Подробности находятся в
+[docs/api.md](docs/api.md).
+
+### Testcontainers-тест пропущен
+
+Класс PostgreSQL-тестов использует `disabledWithoutDocker=true`. Запустите Docker
+и повторите:
+
+```bash
+cd springboot
+./mvnw -Dtest=PostgreSqlMigrationIntegrationTests test
+```
+
+В CI дополнительно проверяется, что все три PostgreSQL-теста действительно
+выполнились без skip.
+
+### `docker compose config` сообщает о required variable или missing secret
+
+Сравните `.env` с `.env.example`, проверьте абсолютный
+`APP_SECRETS_DIRECTORY`, имена всех шести файлов и права доступа. Не помещайте
+пароли непосредственно в `.env`.
+
+### Caddy не получает TLS-сертификат
+
+Проверьте A/AAAA records, доступность TCP `80/443` и UDP `443`, корректность
+`PUBLIC_DOMAIN`, `ADMIN_DOMAIN`, `ACME_EMAIL` и отсутствие другого процесса на
+портах. Диагностика:
+
+```bash
+docker compose logs edge-proxy
+```
+
+### Сервис в Compose имеет статус unhealthy
+
+```bash
+docker compose ps
+docker compose logs --tail 200 <service>
+docker inspect <container> --format '{{json .State.Health}}'
+```
+
+Для backend сначала проверьте PostgreSQL и Flyway; для frontend-public —
+`/healthz`; для Prometheus — корректность probe URL.
+
+### Порт уже занят
+
+Локально чаще всего конфликтуют `5432`, `5173`, `5174`, `8080` и `3000`.
+Остановите конфликтующий процесс или измените соответствующий host/runtime port
+и связанные URL. Production observability ports можно изменить через
+`GRAFANA_PORT`, `PROMETHEUS_PORT` и `ALERTMANAGER_PORT`.
