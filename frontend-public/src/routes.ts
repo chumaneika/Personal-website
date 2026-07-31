@@ -13,6 +13,7 @@ export default [
     route('resume', './pages/ResumePage.tsx'),
     route('contacts', './pages/ContactPage.tsx'),
     route('contact', './routes/contact-redirect.ts'),
+    route('privacy', './pages/PrivacyPage.tsx'),
     route('*', './pages/NotFoundPage.tsx'),
   ]),
 ] satisfies RouteConfig;

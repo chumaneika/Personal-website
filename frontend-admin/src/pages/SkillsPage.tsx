@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { fetchMetaEnums } from '../shared/api/meta';
 import { deleteSkill, fetchSkills, updateSkillVisibility } from '../shared/api/skills';
 import { queryClient } from '../shared/api/queryClient';

@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
 import { queryClient } from '../shared/api/queryClient';
 import { signOut } from '../shared/api/auth';

@@ -1,5 +1,5 @@
 import { data } from 'react-router';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import type { Route } from './+types/NotFoundPage';
 import { getPublicDocumentMetadata } from '../app/documentTitles';
 import { PageState } from '../shared/components/PageState';

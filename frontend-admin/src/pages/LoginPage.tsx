@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { LoginForm } from '../features/auth/LoginForm';
 
 export function LoginPage() {

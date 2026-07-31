@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22.17.1-alpine AS build
+FROM node:22.23.1-alpine AS build
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ ENV VITE_RELEASE=${VITE_RELEASE}
 
 RUN npm run build:production --workspace @personal-website/frontend-public
 
-FROM node:22.17.1-alpine AS runtime
+FROM node:22.23.1-alpine AS runtime
 
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
@@ -37,7 +37,8 @@ COPY frontend-public/package.json frontend-public/package.json
 COPY frontend-admin/package.json frontend-admin/package.json
 
 RUN npm ci --omit=dev --workspace @personal-website/frontend-public --include-workspace-root \
-    && npm cache clean --force
+    && npm cache clean --force \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 COPY --from=build /app/frontend-public/build frontend-public/build
 
@@ -47,4 +48,4 @@ USER node
 
 EXPOSE 8080
 
-CMD ["npm", "run", "start"]
+CMD ["node", "node_modules/@react-router/serve/bin.cjs", "build/server/index.js"]

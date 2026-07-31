@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { fetchDashboard } from '../shared/api/dashboard';
 import { getApiErrorMessage } from '../shared/lib/errors';
 

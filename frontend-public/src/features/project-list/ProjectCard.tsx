@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { OptimizedImage } from '../../shared/components/OptimizedImage';
 import type { ProjectSummaryResponse } from '../../shared/types/api';
 import { formatMonthYear, splitTechnologyStack } from '../../shared/utils/formatters';

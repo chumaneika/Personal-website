@@ -140,7 +140,7 @@ Swagger/OpenAPI выключены по умолчанию. Их включен�
 | Инструмент     | Требуемая версия              | Где зафиксирована                |
 | -------------- | ----------------------------- | -------------------------------- |
 | Java           | Temurin `17.0.19+10`          | `.java-version`                  |
-| Node.js        | `22.17.1`                     | `.nvmrc`, `package.json`         |
+| Node.js        | `22.23.1`                     | `.nvmrc`, `package.json`         |
 | npm            | Совместимый с Node 22         | `package-lock.json` версии 3     |
 | PostgreSQL     | `16`                          | Compose и Testcontainers         |
 | Docker         | Актуальный Docker Engine      | Локальная БД, тесты и deployment |
@@ -591,9 +591,10 @@ docker compose build frontend-public frontend-admin backend edge-proxy
 ```
 
 CI на push и pull request в `main` запускает frontend quality, независимые
-frontend builds, backend tests, PostgreSQL migration tests, Chromium E2E smoke,
-Gitleaks по полной Git-истории и сборку всех deployment-образов. Итоговый
-обязательный check называется `CI / Required`.
+frontend builds, backend tests, PostgreSQL migration tests, Chromium E2E и axe
+accessibility smoke, Gitleaks по полной Git-истории, npm production audit,
+Trivy-проверку Maven-зависимостей и deployment-образов. Итоговый обязательный
+check называется `CI / Required`.
 
 ## Docker Compose
 
@@ -628,6 +629,7 @@ Health checks обоих frontend обращаются к backend
 
    ```bash
    cp .env.example .env
+   chmod 600 .env
    ```
 
 2. Установите уникальный `RELEASE_VERSION`, реальные домены, ACME email,
@@ -786,6 +788,14 @@ Flyway автоматически применяет миграции из
    curl --fail "https://${PUBLIC_DOMAIN}/api/health"
    curl --fail "https://${PUBLIC_DOMAIN}/"
    curl --fail "https://${ADMIN_DOMAIN}/login"
+   ```
+
+   С отдельной машины вне deployment host запустите автоматическую внешнюю
+   проверку HTTPS, security headers, sitemap, privacy page и закрытого PostgreSQL:
+
+   ```bash
+   PUBLIC_DOMAIN="$PUBLIC_DOMAIN" ADMIN_DOMAIN="$ADMIN_DOMAIN" \
+     ./ops/verify-production.sh
    ```
 
 Flyway запускается вместе с backend до успешной readiness-проверки. Caddy

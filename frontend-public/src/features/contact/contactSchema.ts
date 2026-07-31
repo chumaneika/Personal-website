@@ -18,6 +18,9 @@ export const contactSchema = z.object({
     .min(1, 'Message is required.')
     .max(5000, 'Use 5000 characters or fewer.'),
   website: z.string().max(200).optional(),
+  privacyConsent: z
+    .boolean()
+    .refine((value) => value, 'Confirm that you have read the privacy notice.'),
 });
 
 export type ContactFormValues = z.infer<typeof contactSchema>;

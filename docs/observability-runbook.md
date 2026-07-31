@@ -84,6 +84,19 @@ ssh -L 3000:127.0.0.1:3000 deploy@example-host
 
 ## Проверка после деплоя
 
+Релиз не считается завершённым, пока не подтверждены все три внешних канала:
+
+- в backend, public frontend и admin frontend отправлены контролируемые тестовые
+  события, и они появились в соответствующих Sentry projects с текущим
+  `SENTRY_RELEASE`/`VITE_RELEASE`;
+- тестовый Alertmanager alert доставлен в incident webhook, а затем получено
+  resolved-событие;
+- независимый uptime-monitor, запущенный вне deployment host, успешно проверяет
+  public homepage и admin login по HTTPS.
+
+Локальный Blackbox Exporter проверяет DNS/TLS и страницы, но не обнаружит отказ
+всего deployment host. Поэтому он не заменяет внешний uptime-monitor.
+
 Проверьте состояние компонентов:
 
 ```bash

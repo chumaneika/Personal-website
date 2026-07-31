@@ -6,6 +6,7 @@ const validContactMessage = {
   senderEmail: 'visitor@example.com',
   message: 'I would like to discuss a project.',
   website: '',
+  privacyConsent: true,
 };
 
 describe('contactSchema', () => {
@@ -18,6 +19,15 @@ describe('contactSchema', () => {
       ...validContactMessage,
       senderEmail: 'not-an-email',
       website: 'x'.repeat(201),
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('requires privacy consent', () => {
+    const result = contactSchema.safeParse({
+      ...validContactMessage,
+      privacyConsent: false,
     });
 
     expect(result.success).toBe(false);

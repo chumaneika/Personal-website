@@ -142,6 +142,7 @@ export function getPublicDocumentTitle(pathname: string) {
     '/resume': `Resume | ${SITE_NAME}`,
     '/contacts': `Contact | ${SITE_NAME}`,
     '/contact': `Contact | ${SITE_NAME}`,
+    '/privacy': `Privacy | ${SITE_NAME}`,
   };
   const staticTitle = staticTitles[normalizedPathname];
 
@@ -180,6 +181,8 @@ export function getPublicMetaDescription(pathname: string) {
       'Contact Malik to discuss backend development, APIs, integrations, software projects, or engineering opportunities.',
     '/contact':
       'Contact Malik to discuss backend development, APIs, integrations, software projects, or engineering opportunities.',
+    '/privacy':
+      'Learn how contact form data is collected, used, retained, protected, and deleted on Malik’s portfolio website.',
   };
   const staticDescription = staticDescriptions[normalizedPathname];
 

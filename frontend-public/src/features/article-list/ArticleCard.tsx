@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { OptimizedImage } from '../../shared/components/OptimizedImage';
 import type { ArticleSummaryResponse } from '../../shared/types/api';
 import { formatDate } from '../../shared/utils/formatters';

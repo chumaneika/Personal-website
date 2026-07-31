@@ -1,4 +1,4 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router';
 import { data } from 'react-router';
 import type { Route } from './+types/ArticleDetailsPage';
 import { getArticleDocumentMetadata, getPublicDocumentMetadata } from '../app/documentTitles';

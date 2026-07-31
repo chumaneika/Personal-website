@@ -1001,6 +1001,26 @@ main {
     padding: 12px;
   }
 
+  .consent-field {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    font-weight: 700;
+
+    input {
+      width: auto;
+      margin-top: 4px;
+    }
+
+    span {
+      color: var(--ink-soft);
+    }
+
+    a {
+      color: var(--accent-strong);
+      text-decoration: underline;
+    }
+  }
+
   input:focus,
   textarea:focus {
     border-color: var(--accent);
@@ -1023,6 +1043,17 @@ main {
 
   p {
     margin: 0;
+  }
+}
+
+.site-footer__meta {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+
+  a {
+    color: var(--ink);
+    font-weight: 900;
   }
 }
 

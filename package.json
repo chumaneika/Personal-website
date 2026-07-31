@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "22.17.1"
+    "node": "22.23.1"
   },
   "workspaces": [
     "frontend-public",
@@ -16,11 +16,12 @@
     "typecheck": "npm run typecheck --workspaces",
     "lint": "npm run lint --workspaces && eslint e2e playwright.config.ts --max-warnings=0",
     "lint:fix": "npm run lint:fix --workspaces",
-    "format": "prettier --write \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"e2e/**/*.ts\" \"playwright.config.ts\" \"ops/frontend/*.mjs\" \"docs/**/*.md\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
-    "format:check": "prettier --check \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"e2e/**/*.ts\" \"playwright.config.ts\" \"ops/frontend/*.mjs\" \"docs/**/*.md\" \"*.{js,json,md}\" \".github/workflows/*.yml\"",
+    "format": "prettier --write \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"e2e/**/*.ts\" \"playwright.config.ts\" \"ops/frontend/*.mjs\" \"docs/**/*.md\" \"*.{js,json,md}\" \".github/**/*.{yml,yaml}\"",
+    "format:check": "prettier --check \"frontend-public/src/**/*.{ts,tsx,scss}\" \"frontend-admin/src/**/*.{ts,tsx,scss}\" \"frontend-public/*.{ts,json}\" \"frontend-admin/*.{ts,json}\" \"e2e/**/*.ts\" \"playwright.config.ts\" \"ops/frontend/*.mjs\" \"docs/**/*.md\" \"*.{js,json,md}\" \".github/**/*.{yml,yaml}\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:a11y": "playwright test e2e/accessibility.spec.ts",
     "build:public": "npm run build:production --workspace @personal-website/frontend-public && npm run verify:build:public",
     "build:admin": "npm run build:production --workspace @personal-website/frontend-admin && npm run verify:build:admin",
     "build": "npm run build:public && npm run build:admin",
@@ -31,6 +32,7 @@
     "preview:admin": "npm run preview --workspace @personal-website/frontend-admin"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^7.0.0",

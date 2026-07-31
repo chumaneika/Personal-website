@@ -97,6 +97,51 @@ jobs:
         working-directory: springboot
         run: ./mvnw --batch-mode --no-transfer-progress test
 
+  dependency-security:
+    name: Security / npm and Maven dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up fixed Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit production npm dependencies
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Set up fixed Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          cache: maven
+          cache-dependency-path: springboot/pom.xml
+
+      - name: Package Maven dependency inventory
+        working-directory: springboot
+        run: ./mvnw --batch-mode --no-transfer-progress -DskipTests package
+
+      - name: Scan Maven dependencies with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: springboot/target
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+
   database-migrations:
     name: Database / PostgreSQL migrations
     runs-on: ubuntu-latest
@@ -214,11 +259,61 @@ jobs:
             --env PUBLIC_BACKEND_INTERNAL_URL \
             --env PUBLIC_SITE_ORIGIN \
             --entrypoint /bin/sh "personal-website-frontend-public:${RELEASE_VERSION}" \
-            -c 'npm run start & server_pid=$!; for attempt in 1 2 3 4 5 6 7 8 9 10; do wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 503" && break; sleep 1; done; wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 503"; kill "$server_pid"; wait "$server_pid" || true'
+            -c 'node node_modules/@react-router/serve/bin.cjs build/server/index.js & server_pid=$!; for attempt in 1 2 3 4 5 6 7 8 9 10; do wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 503" && break; sleep 1; done; wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 503"; kill "$server_pid"; wait "$server_pid" || true'
           docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
             --security-opt no-new-privileges:true \
             --entrypoint /bin/sh "personal-website-frontend-admin:${RELEASE_VERSION}" \
             -c 'nginx; wget -q -O /tmp/index.html http://127.0.0.1:8080/; wget -q -O /tmp/route.html http://127.0.0.1:8080/projects/new; cmp /tmp/index.html /tmp/route.html; wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 502"; nginx -s quit'
+
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: personal-website-backend:${{ env.RELEASE_VERSION }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+
+      - name: Scan public frontend image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: personal-website-frontend-public:${{ env.RELEASE_VERSION }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          skip-setup-trivy: true
+
+      - name: Scan admin frontend image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: personal-website-frontend-admin:${{ env.RELEASE_VERSION }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          skip-setup-trivy: true
+
+      - name: Scan edge proxy image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: personal-website-edge-proxy:${{ env.RELEASE_VERSION }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          skip-setup-trivy: true
+
+      - name: Scan Loki image with Trivy
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: personal-website-loki:3.7.4
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          skip-setup-trivy: true
+          trivyignores: .trivyignore.yaml
 
   secret-scan:
     name: Security / Secret scan
@@ -290,6 +385,7 @@ jobs:
       - frontend-quality
       - frontend-build
       - backend-tests
+      - dependency-security
       - database-migrations
       - backup-restore
       - docker-build
@@ -304,6 +400,7 @@ jobs:
           FRONTEND_QUALITY: ${{ needs.frontend-quality.result }}
           FRONTEND_BUILD: ${{ needs.frontend-build.result }}
           BACKEND_TESTS: ${{ needs.backend-tests.result }}
+          DEPENDENCY_SECURITY: ${{ needs.dependency-security.result }}
           DATABASE_MIGRATIONS: ${{ needs.database-migrations.result }}
           BACKUP_RESTORE: ${{ needs.backup-restore.result }}
           DOCKER_BUILD: ${{ needs.docker-build.result }}
@@ -314,6 +411,7 @@ jobs:
             "$FRONTEND_QUALITY" \
             "$FRONTEND_BUILD" \
             "$BACKEND_TESTS" \
+            "$DEPENDENCY_SECURITY" \
             "$DATABASE_MIGRATIONS" \
             "$BACKUP_RESTORE" \
             "$DOCKER_BUILD" \

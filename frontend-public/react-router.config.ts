@@ -6,7 +6,5 @@ export default {
   routeDiscovery: {
     mode: 'lazy',
   },
-  future: {
-    v8_splitRouteModules: true,
-  },
+  splitRouteModules: true,
 } satisfies Config;

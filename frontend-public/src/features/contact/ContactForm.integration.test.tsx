@@ -25,6 +25,7 @@ describe('contact form submission', () => {
     await user.type(screen.getByLabelText(/^Name/), 'Grace Hopper');
     await user.type(screen.getByLabelText(/^Email/), 'grace@example.com');
     await user.type(screen.getByLabelText(/^Message/), 'Let us build a reliable service.');
+    await user.click(screen.getByLabelText(/I have read the privacy notice/));
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
     await waitFor(() =>
@@ -48,6 +49,7 @@ describe('contact form submission', () => {
     await user.type(screen.getByLabelText('Name'), 'Grace Hopper');
     await user.type(screen.getByLabelText('Email'), 'grace@example.com');
     await user.type(screen.getByLabelText('Message'), 'Please call me back.');
+    await user.click(screen.getByLabelText(/I have read the privacy notice/));
     await user.click(screen.getByRole('button', { name: 'Send message' }));
 
     const errorStatus = await screen.findByRole('alert');

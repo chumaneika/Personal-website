@@ -1,5 +1,5 @@
 import { lazy, type ReactElement, Suspense } from 'react';
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter } from 'react-router';
 import { AdminLayout } from './AdminLayout';
 import { DocumentTitleManager } from './DocumentTitleManager';
 import { LoginRoute, ProtectedRoute } from './RouteGuards';

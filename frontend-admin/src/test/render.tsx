@@ -1,6 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { type ReactElement } from 'react';
-import { createMemoryRouter, type RouteObject, RouterProvider } from 'react-router-dom';
+import { createMemoryRouter, type RouteObject, RouterProvider } from 'react-router';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { queryClient } from '../shared/api/queryClient';

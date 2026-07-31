@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCurrentAdmin } from '../shared/api/auth';
 

@@ -1,0 +1,82 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:00'
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: maven
+    directory: /springboot
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:15'
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 5
+    groups:
+      maven-minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: gomod
+    directory: /ops/reverse-proxy/custom-caddy
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:20'
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 5
+    groups:
+      caddy-build-dependencies:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: docker
+    directories:
+      - /
+      - /springboot
+      - /ops/frontend
+      - /ops/frontend-public
+      - /ops/reverse-proxy
+      - /ops/observability/loki
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:30'
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 5
+    groups:
+      docker-images:
+        patterns:
+          - '*'
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '06:45'
+      timezone: Europe/Moscow
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - '*'

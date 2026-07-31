@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet } from 'react-router';
 import type { Route } from './+types/AppLayout';
 import { loadProfile } from '../shared/api/publicApi.server';
 import { SocialLinks } from '../shared/components/SocialLinks';
@@ -109,7 +109,10 @@ export function AppLayout({ loaderData }: { loaderData: Route.ComponentProps['lo
           {profile?.email && <a href={`mailto:${profile.email}`}>{profile.email}</a>}
         </div>
         <SocialLinks profile={profile} />
-        <p>{year}</p>
+        <div className="site-footer__meta">
+          <Link to="/privacy">Privacy</Link>
+          <p>{year}</p>
+        </div>
       </footer>
     </div>
   );

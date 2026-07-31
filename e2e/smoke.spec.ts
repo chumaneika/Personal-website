@@ -17,8 +17,9 @@ test('contact, administration, publishing, and logout smoke flow', async ({ brow
   await publicPage.getByLabel('Name').fill('Release smoke test');
   await publicPage.getByLabel('Email').fill('smoke@example.invalid');
   await publicPage
-    .getByLabel('Message')
+    .getByLabel('Message', { exact: true })
     .fill('This automated message verifies the production contact flow.');
+  await publicPage.getByLabel(/I have read the privacy notice/).check();
   await publicPage.getByRole('button', { name: 'Send message' }).click();
   await expect(publicPage.getByRole('status')).toHaveText('Message sent. Thank you.');
 
