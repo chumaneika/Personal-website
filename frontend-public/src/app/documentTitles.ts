@@ -2,6 +2,8 @@ import type { ArticleResponse, ProjectResponse } from '../shared/types/api';
 
 const SITE_NAME = 'Malik';
 const MAX_DESCRIPTION_LENGTH = 160;
+const DEFAULT_SOCIAL_IMAGE_PATH = '/og-default.png';
+const DEFAULT_SOCIAL_IMAGE_ALT = 'Malik Alikberov — Java Backend Developer';
 
 export type PublicDocumentMetadata = {
   title: string;
@@ -71,6 +73,7 @@ function createDocumentMetadata({
   canonicalUrl,
   type,
   imageUrl,
+  imageAlt,
   articlePublishedTime,
   articleModifiedTime,
 }: {
@@ -79,9 +82,13 @@ function createDocumentMetadata({
   canonicalUrl: string;
   type: 'website' | 'article';
   imageUrl?: string | null;
+  imageAlt?: string;
   articlePublishedTime?: string;
   articleModifiedTime?: string;
 }): PublicDocumentMetadata {
+  const usesDefaultImage = !imageUrl;
+  const socialImageUrl = imageUrl ?? new URL(DEFAULT_SOCIAL_IMAGE_PATH, canonicalUrl).toString();
+  const socialImageAlt = imageUrl ? (imageAlt ?? title) : DEFAULT_SOCIAL_IMAGE_ALT;
   const openGraph: Record<string, string> = {
     'og:title': title,
     'og:description': description,
@@ -89,19 +96,21 @@ function createDocumentMetadata({
     'og:type': type,
     'og:site_name': SITE_NAME,
     'og:locale': 'en_US',
+    'og:image': socialImageUrl,
+    'og:image:alt': socialImageAlt,
   };
   const twitterCard: Record<string, string> = {
-    'twitter:card': imageUrl ? 'summary_large_image' : 'summary',
+    'twitter:card': 'summary_large_image',
     'twitter:title': title,
     'twitter:description': description,
+    'twitter:image': socialImageUrl,
+    'twitter:image:alt': socialImageAlt,
   };
 
-  // TODO(social-preview): Add an approved site-wide 1200x630 fallback image.
-  // Until then, omit image tags when content has no direct image URL so social
-  // crawlers render a valid text card instead of requesting a broken placeholder.
-  if (imageUrl) {
-    openGraph['og:image'] = imageUrl;
-    twitterCard['twitter:image'] = imageUrl;
+  if (usesDefaultImage) {
+    openGraph['og:image:type'] = 'image/png';
+    openGraph['og:image:width'] = '1200';
+    openGraph['og:image:height'] = '630';
   }
 
   if (type === 'article') {
@@ -201,27 +210,11 @@ export function getPublicCanonicalUrl(pathname: string, origin: string) {
 }
 
 export function getPublicOpenGraphMetadata(pathname: string, origin: string) {
-  const normalizedPathname = normalizePathname(pathname);
-  const isArticle = /^\/blog\/[^/]+$/.test(normalizedPathname);
-
-  return {
-    'og:title': getPublicDocumentTitle(normalizedPathname),
-    'og:description': getPublicMetaDescription(normalizedPathname),
-    'og:url': getPublicCanonicalUrl(normalizedPathname, origin),
-    'og:type': isArticle ? 'article' : 'website',
-    'og:site_name': SITE_NAME,
-    'og:locale': 'en_US',
-  };
+  return getPublicDocumentMetadata(pathname, origin).openGraph;
 }
 
-export function getPublicTwitterCardMetadata(pathname: string) {
-  const normalizedPathname = normalizePathname(pathname);
-
-  return {
-    'twitter:card': 'summary',
-    'twitter:title': getPublicDocumentTitle(normalizedPathname),
-    'twitter:description': getPublicMetaDescription(normalizedPathname),
-  };
+export function getPublicTwitterCardMetadata(pathname: string, origin: string) {
+  return getPublicDocumentMetadata(pathname, origin).twitterCard;
 }
 
 export function getPublicDocumentMetadata(
@@ -261,6 +254,7 @@ export function getProjectDocumentMetadata(
     // TODO(social-preview): Keep project cover support, but only store direct
     // HTTPS image resources in coverImageUrl (not an HTML page URL).
     imageUrl: resolveAbsoluteUrl(project.coverImageUrl, origin),
+    imageAlt: `${project.title} project preview`,
   });
 }
 
@@ -278,9 +272,8 @@ export function getArticleDocumentMetadata(
     description,
     canonicalUrl,
     type: 'article',
-    // TODO(social-preview): Reuse the future fallback when an article has no
-    // cover, and validate uploaded cover URLs before publishing.
     imageUrl: resolveAbsoluteUrl(article.coverImageUrl, origin),
+    imageAlt: `${article.title} article preview`,
     articlePublishedTime: article.createdAt,
     articleModifiedTime: article.updatedAt,
   });

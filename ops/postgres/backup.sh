@@ -47,6 +47,34 @@ if ! pg_isready --quiet --timeout=10; then
   exit 1
 fi
 
+flyway_history_exists=$(
+  psql \
+    --no-psqlrc \
+    --tuples-only \
+    --no-align \
+    --set ON_ERROR_STOP=1 \
+    --command "SELECT to_regclass('public.flyway_schema_history') IS NOT NULL"
+)
+
+if [ "$flyway_history_exists" != "t" ]; then
+  echo "Flyway schema history is missing; refusing to create an application backup" >&2
+  exit 1
+fi
+
+failed_migrations=$(
+  psql \
+    --no-psqlrc \
+    --tuples-only \
+    --no-align \
+    --set ON_ERROR_STOP=1 \
+    --command "SELECT COUNT(*) FROM public.flyway_schema_history WHERE success = FALSE"
+)
+
+if [ "$failed_migrations" != "0" ]; then
+  echo "Flyway schema history contains failed migrations; backup was not created" >&2
+  exit 1
+fi
+
 echo "Creating PostgreSQL backup ${archive_name}"
 pg_dump \
   --format=custom \

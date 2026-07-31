@@ -24,10 +24,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up fixed Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -61,10 +61,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up fixed Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -83,10 +83,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up fixed Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version-file: .java-version
@@ -104,10 +104,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up fixed Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version-file: .java-version
@@ -128,6 +128,26 @@ jobs:
           grep -Eq
           'tests="3" errors="0" skipped="0" failures="0"'
           springboot/target/surefire-reports/TEST-com.malik.personal_website.PostgreSqlMigrationIntegrationTests.xml
+
+  backup-restore:
+    name: Database / Backup restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Build backend image
+        run: >-
+          docker build
+          --tag personal-website-backup-restore:ci
+          springboot
+
+      - name: Verify backup, restore, Flyway, and backend readiness
+        env:
+          BACKUP_RESTORE_BACKEND_IMAGE: personal-website-backup-restore:ci
+        run: /bin/sh ops/postgres/verify-backup-restore.sh
 
   docker-build:
     name: Deployment / Docker build
@@ -152,7 +172,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare non-production secret files
         run: |
@@ -191,12 +211,77 @@ jobs:
         run: |
           docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
             --security-opt no-new-privileges:true \
+            --env PUBLIC_BACKEND_INTERNAL_URL \
+            --env PUBLIC_SITE_ORIGIN \
             --entrypoint /bin/sh "personal-website-frontend-public:${RELEASE_VERSION}" \
-            -c 'npm run start & server_pid=$!; for attempt in 1 2 3 4 5 6 7 8 9 10; do wget -q -O /dev/null http://127.0.0.1:8080/healthz && break; sleep 1; done; wget -q -O /dev/null http://127.0.0.1:8080/healthz; kill "$server_pid"; wait "$server_pid" || true'
+            -c 'npm run start & server_pid=$!; for attempt in 1 2 3 4 5 6 7 8 9 10; do wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 503" && break; sleep 1; done; wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 503"; kill "$server_pid"; wait "$server_pid" || true'
           docker run --rm --read-only --tmpfs /tmp --cap-drop ALL \
             --security-opt no-new-privileges:true \
             --entrypoint /bin/sh "personal-website-frontend-admin:${RELEASE_VERSION}" \
-            -c 'nginx; wget -q -O /tmp/index.html http://127.0.0.1:8080/; wget -q -O /tmp/route.html http://127.0.0.1:8080/projects/new; cmp /tmp/index.html /tmp/route.html; nginx -s quit'
+            -c 'nginx; wget -q -O /tmp/index.html http://127.0.0.1:8080/; wget -q -O /tmp/route.html http://127.0.0.1:8080/projects/new; cmp /tmp/index.html /tmp/route.html; wget -S -O /dev/null http://127.0.0.1:8080/healthz 2>&1 | grep -Eq "HTTP/[0-9.]+ 502"; nginx -s quit'
+
+  secret-scan:
+    name: Security / Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out complete repository history
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Scan Git history with Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  e2e-smoke:
+    name: E2E / Chromium smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: personal_website_e2e
+          POSTGRES_USER: personal_website_e2e
+          POSTGRES_PASSWORD: e2e-database-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U personal_website_e2e -d personal_website_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up fixed Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Set up fixed Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version-file: .java-version
+          cache: maven
+          cache-dependency-path: springboot/pom.xml
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests
+        run: npm run test:e2e
 
   required:
     name: CI / Required
@@ -206,7 +291,10 @@ jobs:
       - frontend-build
       - backend-tests
       - database-migrations
+      - backup-restore
       - docker-build
+      - secret-scan
+      - e2e-smoke
     runs-on: ubuntu-latest
     timeout-minutes: 2
 
@@ -217,14 +305,20 @@ jobs:
           FRONTEND_BUILD: ${{ needs.frontend-build.result }}
           BACKEND_TESTS: ${{ needs.backend-tests.result }}
           DATABASE_MIGRATIONS: ${{ needs.database-migrations.result }}
+          BACKUP_RESTORE: ${{ needs.backup-restore.result }}
           DOCKER_BUILD: ${{ needs.docker-build.result }}
+          SECRET_SCAN: ${{ needs.secret-scan.result }}
+          E2E_SMOKE: ${{ needs.e2e-smoke.result }}
         run: |
           for result in \
             "$FRONTEND_QUALITY" \
             "$FRONTEND_BUILD" \
             "$BACKEND_TESTS" \
             "$DATABASE_MIGRATIONS" \
-            "$DOCKER_BUILD"
+            "$BACKUP_RESTORE" \
+            "$DOCKER_BUILD" \
+            "$SECRET_SCAN" \
+            "$E2E_SMOKE"
           do
             test "$result" = "success"
           done

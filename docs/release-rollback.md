@@ -101,7 +101,13 @@
    ```
 
 5. Повторите health checks и функциональную проверку из сценария отката
-   приложения. Сравните версию Flyway в логах с ожидаемой версией схемы.
+   приложения. Убедитесь, что backend стал ready, а в логах есть успешная Flyway
+   validation с ожидаемым количеством миграций:
+
+   ```bash
+   docker compose logs --since 10m backend | grep 'Successfully validated'
+   curl --fail "https://${PUBLIC_DOMAIN}/api/health"
+   ```
 
 ## После отката
 

@@ -12,6 +12,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+playwright-report/
+test-results/
+blob-report/
 
 # Local PostgreSQL backup archives
 backups/

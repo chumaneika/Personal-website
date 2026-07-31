@@ -77,6 +77,9 @@ describe('public document titles', () => {
       'og:type': 'website',
       'og:site_name': 'Malik',
       'og:locale': 'en_US',
+      'og:image': 'https://malik.example/og-default.png',
+      'og:image:width': '1200',
+      'og:image:height': '630',
     });
     expect(projectsMetadata['og:description']).toContain('Payment Service');
     expect(articleMetadata['og:type']).toBe('article');
@@ -84,13 +87,15 @@ describe('public document titles', () => {
   });
 
   it('builds Twitter Card metadata from the page metadata', () => {
-    const metadata = getPublicTwitterCardMetadata('/blog/spring-security');
+    const metadata = getPublicTwitterCardMetadata('/blog/spring-security', 'https://malik.example');
 
     expect(metadata).toEqual({
-      'twitter:card': 'summary',
+      'twitter:card': 'summary_large_image',
       'twitter:title': 'Spring Security | Blog | Malik',
       'twitter:description':
         'Read “Spring Security”, an engineering article by Malik about backend development, architecture, and production software.',
+      'twitter:image': 'https://malik.example/og-default.png',
+      'twitter:image:alt': 'Malik Alikberov — Java Backend Developer',
     });
   });
 
@@ -135,7 +140,7 @@ describe('public document titles', () => {
     });
   });
 
-  it('uses a text-only social card while content has no preview image', () => {
+  it('uses the site-wide social image while content has no preview image', () => {
     const metadata = getProjectDocumentMetadata(
       {
         id: 1,
@@ -160,11 +165,19 @@ describe('public document titles', () => {
       'https://malik.example',
     );
 
-    expect(metadata.openGraph).not.toHaveProperty('og:image');
+    expect(metadata.openGraph).toMatchObject({
+      'og:image': 'https://malik.example/og-default.png',
+      'og:image:alt': 'Malik Alikberov — Java Backend Developer',
+      'og:image:type': 'image/png',
+      'og:image:width': '1200',
+      'og:image:height': '630',
+    });
     expect(metadata.twitterCard).toEqual({
-      'twitter:card': 'summary',
+      'twitter:card': 'summary_large_image',
       'twitter:title': 'Project Without Cover | Projects | Malik',
       'twitter:description': 'A project whose preview image will be added later.',
+      'twitter:image': 'https://malik.example/og-default.png',
+      'twitter:image:alt': 'Malik Alikberov — Java Backend Developer',
     });
   });
 

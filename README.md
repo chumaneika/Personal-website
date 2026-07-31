@@ -515,6 +515,7 @@ npm run build:admin
 npm run build
 npm run test
 npm run test:watch
+npm run test:e2e
 npm run typecheck
 npm run lint
 npm run lint:fix
@@ -530,6 +531,13 @@ npm run quality
 
 Он последовательно запускает Prettier check, ESLint без warnings, TypeScript,
 Vitest и production build обоих приложений.
+
+Browser E2E smoke-тесты запускаются отдельно через `npm run test:e2e`. Они
+поднимают backend, public и admin frontend и проверяют контактную форму, вход
+администратора, публикацию проекта и logout. Для локального запуска нужен
+PostgreSQL на `127.0.0.1:5432` с базой и пользователем
+`personal_website_e2e`; значения подключения можно переопределить переменными
+`SPRING_DATASOURCE_*`.
 
 Результаты сборки:
 
@@ -583,8 +591,9 @@ docker compose build frontend-public frontend-admin backend edge-proxy
 ```
 
 CI на push и pull request в `main` запускает frontend quality, независимые
-frontend builds, backend tests, PostgreSQL migration tests и сборку всех
-deployment-образов. Итоговый обязательный check называется `CI / Required`.
+frontend builds, backend tests, PostgreSQL migration tests, Chromium E2E smoke,
+Gitleaks по полной Git-истории и сборку всех deployment-образов. Итоговый
+обязательный check называется `CI / Required`.
 
 ## Docker Compose
 
@@ -606,6 +615,12 @@ DNS-именами и TLS. Он не публикует PostgreSQL и backend н
 PostgreSQL находится только во внутренней сети `database`. Backend соединяет
 сети `application` и `database`. Caddy и frontend находятся в `edge`, а
 observability-компоненты — в `monitoring`.
+
+Health checks обоих frontend обращаются к backend
+`/actuator/health/readiness`, поэтому frontend считается healthy только при
+доступных backend и PostgreSQL. Public SEO metadata использует
+`frontend-public/public/og-default.png` как общий Open Graph/Twitter preview,
+когда у проекта или статьи нет собственной обложки.
 
 ### Настройка
 
@@ -802,8 +817,10 @@ Flyway запускается вместе с backend до успешной read
 ### Backups и rollback
 
 Автоматический `postgres-backup` создаёт compressed custom-format dump,
-проверяет его через `pg_restore --list`, создаёт SHA-256 checksum и удаляет
-архивы старше срока retention.
+проверяет его через `pg_restore --list`, требует успешную
+`flyway_schema_history`, создаёт SHA-256 checksum и удаляет архивы старше срока
+retention. Restore повторно проверяет checksum и историю Flyway до запуска
+backend.
 
 Ручной backup:
 
@@ -820,6 +837,19 @@ docker compose run --rm --entrypoint /bin/sh postgres-backup \
   /scripts/restore.sh /backups/users_db_YYYYMMDDTHHMMSSZ.dump
 docker compose start backend
 ```
+
+После restore backend обязан пройти Flyway validation и readiness. Полная
+изолированная проверка того же сценария:
+
+```bash
+docker build -t personal-website-backup-restore:local springboot
+BACKUP_RESTORE_BACKEND_IMAGE=personal-website-backup-restore:local \
+  /bin/sh ops/postgres/verify-backup-restore.sh
+```
+
+Этот тест создаёт временные Docker network, volume и containers, восстанавливает
+контрольную запись, повторно запускает backend и проверяет Flyway в логах. Те же
+действия выполняет обязательный CI job `Database / Backup restore`.
 
 Храните копии backup в зашифрованном off-site storage и регулярно проверяйте
 restore на отдельной PostgreSQL. Полный порядок application rollback и
@@ -962,8 +992,8 @@ docker compose logs --tail 200 <service>
 docker inspect <container> --format '{{json .State.Health}}'
 ```
 
-Для backend сначала проверьте PostgreSQL и Flyway; для frontend-public —
-`/healthz`; для Prometheus — корректность probe URL.
+Для backend сначала проверьте PostgreSQL и Flyway; для обоих frontend —
+`/healthz` и backend readiness; для Prometheus — корректность probe URL.
 
 ### Порт уже занят
 

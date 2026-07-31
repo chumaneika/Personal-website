@@ -8,6 +8,7 @@ import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 
 const frontendFiles = ['frontend-{public,admin}/src/**/*.{ts,tsx}'];
+const e2eFiles = ['e2e/**/*.ts', 'playwright.config.ts'];
 
 export default defineConfig([
   {
@@ -61,6 +62,17 @@ export default defineConfig([
     files: ['frontend-public/src/app/AppLayout.tsx', 'frontend-public/src/pages/**/*Page.tsx'],
     rules: {
       'react-refresh/only-export-components': 'off',
+    },
+  },
+  {
+    files: e2eFiles,
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: globals.node,
+    },
+    rules: {
+      '@typescript-eslint/consistent-type-imports': 'error',
     },
   },
   prettier,

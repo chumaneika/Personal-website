@@ -64,4 +64,37 @@ pg_restore \
   --dbname="$PGDATABASE" \
   "$archive_path"
 
+flyway_history_exists=$(
+  psql \
+    --no-psqlrc \
+    --tuples-only \
+    --no-align \
+    --set ON_ERROR_STOP=1 \
+    --command "SELECT to_regclass('public.flyway_schema_history') IS NOT NULL"
+)
+
+if [ "$flyway_history_exists" != "t" ]; then
+  echo "Restored database does not contain Flyway schema history" >&2
+  exit 1
+fi
+
+failed_migrations=$(
+  psql \
+    --no-psqlrc \
+    --tuples-only \
+    --no-align \
+    --set ON_ERROR_STOP=1 \
+    --command "SELECT COUNT(*) FROM public.flyway_schema_history WHERE success = FALSE"
+)
+
+if [ "$failed_migrations" != "0" ]; then
+  echo "Restored Flyway schema history contains failed migrations" >&2
+  exit 1
+fi
+
+psql \
+  --no-psqlrc \
+  --set ON_ERROR_STOP=1 \
+  --command "ANALYZE"
+
 echo "PostgreSQL restore completed from ${archive_path}"

@@ -24,6 +24,10 @@ export function getBackendInternalUrl() {
   );
 }
 
+export function getBackendReadinessUrl() {
+  return new URL('../actuator/health/readiness', `${getBackendInternalUrl()}/`).toString();
+}
+
 export function getPublicSiteOrigin() {
   return normalizeAbsoluteHttpUrl(
     process.env.PUBLIC_SITE_ORIGIN?.trim() || DEFAULT_SITE_ORIGIN,
