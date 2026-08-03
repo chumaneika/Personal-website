@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM eclipse-temurin:17.0.19_10-jdk-jammy AS build
+FROM eclipse-temurin:22.0.2_9-jdk-jammy AS build
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.m2 \
     ./mvnw -DskipTests package \
     && cp target/*.jar app.jar
 
-FROM eclipse-temurin:17.0.19_10-jre-jammy
+FROM eclipse-temurin:22.0.2_9-jre-jammy
 
 WORKDIR /app
 
